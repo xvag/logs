@@ -1,0 +1,91 @@
+Q0:	#	-> C0
+	"	-> E4
+	'	-> E5
+	_ a-z A-Z -> V0
+	0	-> I0
+	1-9	-> I1
+	.	-> E1
+	=	-> O6
+	+	-> O0
+	\-	-> O1
+	\*	-> O2
+	/	-> O3
+	%	-> O4
+	=	-> O14
+O0:	0	-> I0
+	1-9	-> I1
+	.	-> E1
+	=	-> O5
+	\n	-> GOOD
+O1:	0	-> I0
+	1-9	-> I1
+	.	-> E1
+	=	-> O6
+	\n	-> GOOD
+O2:	\*	-> O7
+	=	-> O11
+	\n	-> GOOD
+O3:	/	-> O8
+	=	-> O13
+	\n	-> GOOD
+O4:	=	-> O9
+	\n	-> GOOD
+O5:	\n	-> GOOD
+O6:	\n	-> GOOD
+O7:	=	-> O10
+	\n	-> GOOD
+O8:	=	-> O12
+	\n	-> GOOD
+O9:	\n	-> GOOD
+O10:	\n	-> GOOD
+O11:	\n	-> GOOD
+O12:	\n	-> GOOD
+O13:	\n	-> GOOD
+O14:	\n	-> GOOD
+I0:	0-9	-> E0
+	.	-> F0
+	\n	-> GOOD
+I1:	0-9	-> I1
+	.	-> F0
+	\n	-> GOOD
+F0:	e E	-> E2
+	0-9	-> F2
+	\n	-> GOOD
+F1:	0-9	-> F1
+	e E	-> E2
+	\n	-> GOOD
+F2:	0-9	-> F2
+	e E	-> E2
+	\n	-> GOOD
+F3:	0-9	-> F3
+	\n	-> GOOD
+V0:	_ 0-9 a-z A-Z	-> V0
+	\n	-> GOOD
+S0:	\n	-> GOOD
+S1:	\n	-> GOOD
+S2:	"	-> E7
+	\n	-> GOOD
+C0:	0-9 a-z A-Z \s	-> C0
+	\n	-> GOOD
+C1:	0-9 a-z A-Z \s \n	-> E7
+	"	-> C1
+	EOF	-> GOOD
+E0:	0-9	-> E0
+	.	-> F0
+E1:	0-9	-> F1
+E2:	0-9	-> F3
+	+ \-	-> E3
+E3:	0-9	-> F3
+E4:	"	-> S2
+	0-9 a-z A-Z \s	-> E6
+E5:	0-9 a-z A-Z \s	-> E5
+	'	-> S0
+E6:	0-9 a-z A-Z \s	-> E6
+	"	-> S1
+E7:	0-9 a-z A-Z \s \n -> E7
+	"	-> E8
+E8:	0-9 a-z A-Z \s \n -> E7
+	"	-> E9
+E9:	0-9 a-z A-Z \s \n -> E7
+	"	-> C1
+GOOD(OK):

@@ -1,0 +1,71 @@
+Host: Arch 4.15
+Hypervisor: KVM/Qemu
+
+PXE Server: Debian 9 VM
+PXE Client: random qemu VM
+VM Network configuration: bridging with libvirt
+
+- Start PXE server with 2 NICs:
+One (br0) for the home-lab local network
+and the other (user) for internet access
+
+virsh edit pxeserver
+
+ <interface type='user'>
+  <mac address='52:54:00:31:85:8c'/>
+ </interface>
+
+ <interface type='bridge'>
+  <mac address='52:54:00:12:34:56'/>
+  <source bridge='br0'/>
+ </interface>
+
+
+- Set up PXE Server:
+apt-get update
+apt-get install dnsmasq
+
+- set up static IP for eth2(br0) in /etc/network/interfaces:
+ auto eth2
+ iface eth2 inet static
+ address=192.168.1.10
+ netmask=255.255.255.0
+ gateway=127.0.0.1
+
+- edit /etc/resolv.conf
+ nameserver=127.0.0.1
+
+- restart network
+service networking restart
+
+- edit configuration file: /etc/dnsmasq.conf
+ interface=eth2
+ dhcp-range=eth2,192.168.1.100,192.168.1.200,4h
+ dhcp-boot=pxelinux.0
+ pxe-service=x86PC, "Install Linux", pxelinux
+ enable-tftp
+ tftp-root=/srv/tftp
+
+- copy pxelinux.0 and netboot.tar.gr to /srv/tftp/ and untar netboot.tar.gz
+
+- restart the service
+/etc/init.d/dnsmasq restart
+
+
+- Configure PXE client
+
+--create a vm image:
+qemu-img create -f raw testvm.raw 20G
+
+-- import it to libvirt:
+virt-install --name testvm --memory 2048 --disk /path/to/testvm.raw --import
+
+-- set up 2 NICs again as above, but place br0 interface above user and configure vm to boot from network:
+virsh edit testvm
+ <os>
+    <type arch='x86_64' machine='pc-i440fx-2.11'>hvm</type>
+    <boot dev='network'/>     <--add this line
+    <boot dev='hd'/>
+  </os>
+
+- Boot testvm and enjoy!

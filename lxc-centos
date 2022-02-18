@@ -1,0 +1,47 @@
+
+- lxc is available on EPEL repository:
+yum install epel-release
+
+- install lxc and dependencies:
+yum install lxc lxc-templates lxc-extra libcap-devel libcgroup busybox wget bridge-utils debootstrap perl libvirt
+
+- check that everything is fine to run containers:
+lxc-checkconfig
+
+- start/enable the services:
+systemctl start/enalbe lxc/libvirtd
+
+- templates are stored in:
+/usr/share/lxc/templates/
+
+- create a container:
+lxc-create -n lxc-name -t template-name
+eg.
+lxc-create -n cent-cont -t centos
+
+- working with containers:
+cat /var/lib/lxc/lxc-name/tmp_root_pass
+lxc-ls
+lxc-ls --active
+lxc-info -n lxc-name
+lxc-start -n lxc-name -d
+lxc-console -n lxc-name -t 0
+lxc-stop -n lxc-name
+lxc-detroy -n lxc-name
+lxc-clone lxc-name lxc-name-clone
+
+- snapshots:
+--first stop:
+lxc-stop -n lxc-name
+-- and then snapshot:
+lxc-snapshot -n lxc-name
+
+- where the snapshot is saved:
+lxc-snapshot -L -n lxc-name
+
+- restore from snapshot:
+lxc-snapshot -r snap- -n lxc-name
+
+src:
+https://www.itzgeek.com/how-tos/linux/centos-how-tos/setup-linux-container-with-lxc-on-centos-7-rhel-7.html
+https://www.tecmint.com/install-create-run-lxc-linux-containers-on-centos/

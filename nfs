@@ -1,0 +1,56 @@
+Host: Centos 7
+
+# Server side (IP=192.168.1.100)
+yum install nfs-utils
+systemctl start/enable rpcbind/nfs-server/nfs-lock/nfs-idmap
+
+- edit the exports file:
+vi /etc/exports
+ # syntax: /path/to/share client-ip-or-subnet(options)
+ # eg:
+ /var/nfsdir 192.168.1.9(rw,sync,no_root_squash,no_all_squash)
+ /srv/nfs 192.168.1.0/24(rw,sync,no_root_squash,no_all_squash)
+ /home/nfsshare 192.168.1.*(rw,sync,no_root_squash,no_all_squash)
+
+systemctl restart nfs-server
+
+- configure firewall
+firewall-cmd --permanent --zone=public --add-service=nfs
+firewall-cmd --permanent --zone=public --add-service=mountd
+firewall-cmd --permanent --zone=public --add-service=rpc-bind
+firewall-cmd --reload
+
+# Client Side (IP=192.168.1.9)
+yum install nfs-utils
+
+- create the NFS directory mount point/s:
+mkdir -p /mnt/nfshare
+
+- list available shares in a NFS server:
+showmount -e 192.168.1.100
+
+- mount the NFS share:
+mount -t nfs 192.168.1.100:/srv/nfs/share /mnt/nfshare
+
+- edit /etc/fstab to be permanent
+ 192.168.1.100:/srv/nfs/share /mnt/nfshare nfs defaults 0 0
+
+- auto-mount with autofs:
+yum install autofs
+
+vi /etc/auto.master
+ ...
+ /mnt /etc/auto.nfs-share --timeout=60
+ ...
+
+vi /etc/auto.nfs-share
+ nfshare -fstype=nfs 192.168.1.101:/srv/nfs
+
+systemctl restart autofs
+systemctl enable autofs
+
+sources:
+https://www.tecmint.com/configure-nfs-server/
+https://www.unixmen.com/setting-nfs-server-client-centos-7/
+https://www.howtoforge.com/nfs-server-and-client-on-centos-7
+https://wiki.archlinux.org/index.php/Autofs

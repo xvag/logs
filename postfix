@@ -1,0 +1,86 @@
+
+
+yum install postfix mailx
+
+- add email aliases:
+vim /etc/aliases
+ ...
+ mailusers: user1 user2
+ ...
+
+postalias /etc/aliases
+
+
+- configure postfix:
+vim /etc/postfix/main.cf
+ ...
+ # myorigin specifies the domain that appears
+ # in messages sent from the server
+ myorigin = $myhostname
+ ...
+ # mydestination lists what domains this machine
+ # will deliver email messages locally
+ mydestination = $myhostname, localhost.$mydomain, localhost
+ ...
+ # mynetworks defines the authorized networks Postfix
+ # will forward messages from
+ mynetworks = subnet
+ ...
+ # relay_domains specifies the destinations to which
+ # emails should be sent to
+ relay_domains = $mydestination
+ ...
+ # inet_interfaces defines which network interfaces
+ # the mail service should listen on
+ inet_interfaces = all
+ ...
+ # mailbox_size_limit and message_size_limit will be used
+ # to set the size of each user’s mailbox and the maximum
+ # allowed size of individual messages (in bytes)
+ mailbox_size_limit = 51200000
+ message_size_limit = 5120000
+ ...
+ # Require that a remote SMTP client introduces itself
+ # with the HELO or EHLO command before sending the MAIL
+ # command or other commands that require EHLO negotiation
+ smtpd_helo_required = yes
+ ...
+ # Permit the request when the client IP address matches
+ # any network or network address listed in $mynetworks
+ # Reject the request when the client HELO and EHLO command
+ # has a bad hostname syntax
+ smtpd_helo_restrictions = permit_mynetworks, reject_invalid_helo_hostname
+ ...
+ # Reject the request when Postfix does not represent
+ # the final destination for the sender address
+ smtpd_sender_restrictions = permit_mynetworks, reject_unknown_sender_domain
+ ...
+ # Reject the request unless Postfix is acting as mail
+ # forwarder or is the final destination
+ smtpd_recipient_restrictions = permit_mynetworks, reject_unauth_destination
+ ...
+
+
+- test with telnet:
+telnet localhost smtp
+ > ehlo localhost
+ > mail from:<user>
+ > rcpt to:<user>
+ > data
+type mail body
+end with .
+.
+ > quit
+
+or:
+
+- test with mail:
+echo "mail body" | mail -s "mail subject" user@localhost.localdomain
+
+- check for the new email:
+vim /var/spool/mail/user
+
+src:
+https://www.tecmint.com/setting-up-email-services-smtp-and-restricting-access-to-smtp/
+https://www.unixmen.com/setup-a-local-mail-server-in-centos-7/
+https://tecadmin.net/bash-mail-command-not-found/

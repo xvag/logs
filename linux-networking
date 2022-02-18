@@ -1,0 +1,175 @@
+
+/etc/hosts
+is used to resovle names <-> IPs in small networks
+
+/etc/resolv.conf
+specifies the IP address of DNS servers and the search domain
+
+/etc/host.conf
+specifies the methods and the order by which hostnames are resolved
+
+/etc/sysconfig/network
+contains routing and global host information
+
+/etc/sysconfig/network-scripts/
+contains network adapters configuration files
+
+/etc/hostname
+hostnamectl status
+hostnamectl set-hostname [new hostname]
+systemctl restart systemd-hostnamed
+or
+nmcli general hostname
+nmcli general hostame [new hostname]
+
+- add static hostname:
+vi /etc/hosts
+ ...
+ 192.168.1.155 staticexample.domain
+ ...
+
+- set static ip
+vi /etc/sysconfig/network-scripts/ifcfg-eth0
+ DEVICE=eth0
+ BOOTPROTO=static
+ ONBOOT=yes
+ IPADDR=192.168.1.15
+ NETMASK=255.255.255.0
+ GATEWAY=192.168.1.1
+
+ip link set eth0 up
+
+- add a second interface network address:
+nmcli con modify eth0 +ipv4.addresses 192.168.1.155/24
+nmcli con up eth0
+
+
+# SSH
+- connect to a server:
+ssh [-p port-num] user@server-address
+- run a command to a server:
+ssh [-p port-num] user@server-address command
+- store common options in client side:
+vim ~/.ssh/config
+ ...
+ # global options
+ User username
+ # host-specific options
+ Host myserver
+    HostName server-address
+    Port port-num
+ ...
+- so client can connect with just:
+ssh myserver
+
+- SSH server configuration file:
+/etc/ssh/sshd_config
+
+- connect with ssh keys:
+user must have accounts on client and server
+
+[user@client]$ ssh-keygen -t rsa
+...
+will create ~/.ssh/id_rsa and ~/.ssh/id_rsa.pub
+
+[user@client]$ ssh-copy-id user@server
+or
+[user@client]$ cat ~/.ssh/id_rsa.pub | ssh user@server "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
+
+! make sure:
+- Your home directory ~, your ~/.ssh directory and the ~/.ssh/authorized_keys file
+on the remote machine must be writable only by you: rwx------ and rwxr-xr-x are fine,
+but rwxrwx--- is no good, even if you are the only user in your group (if you prefer
+numeric modes: 700 or 755, not 775).
+- If ~/.ssh or authorized_keys is a symbolic link, the canonical path
+(with symbolic links expanded) is checked.
+- Your ~/.ssh/authorized_keys file (on the remote machine) must be readable (at least 400),
+but you'll need it to be also writable (600) if you will add any more keys to it.
+- Your private key file (on the local machine) must be readable and writable only by you:
+rw-------, i.e. 600.
+- Also, if SELinux is set to enforcing, you may need to run restorecon -R -v ~/.ssh
+
+src:https://unix.stackexchange.com/questions/36540/why-am-i-still-getting-a-password-prompt-with-ssh-with-public-key-authentication#36687
+
+
+# Firewall
+
+yum install firewalld firewall-cmd
+systemctl [status,start/stop,enable/disable] firewalld
+firewall-cmd --state
+
+firewall-cmd --get-default-zone
+firewall-cmd --get-active-zones
+firewall-cmd --get-zones
+firewall-cmd --set-default-zone=trusted
+
+- to assign an interface temporarily/permanent to a particular zone:
+firewall-cmd [--permanent] --zone=internal --change-interface=eth0
+ --permanent, also creates the file /etc/firewalld/zones/internal.xml
+
+- to ascertain the zone associated with a particular interface:
+firewall-cmd --get-zone-of-interface=eth0
+
+- to get all details about a particular zone:
+firewall-cmd --zone=public --list-all
+
+- to assign a source to a zone:
+firewall-cmd [--permanent] --zone=trusted --add-source=192.168.1.0/24
+- anyone with an IP address of 192.168.1.x will be added to the trusted zone
+
+firewall-cmd [--permanent] --zone=trusted --remove-source=192.168.1.0/24
+firewall-cmd [--permanent] --zone=trusted --change-source=192.168.1.0/24
+firewall-cmd --zone=trusted --list-sources
+
+- Zones
+drop:
+All incoming packets are dropped with no reply.
+Only outgoing connections are permitted.
+
+block:
+All incoming network connections are rejected.
+The only permitted connections are those from within the system.
+
+public:
+Do not trust any computers on the network; only certain consciously
+selected incoming connections are permitted.
+
+external:
+Used when masquerading is being used, such as in routers.
+Trust levels are the same as in public.
+
+dmz (Demilitarized Zone):
+Used when access to some (but not all) services are to be allowed
+to the public. Only particular incoming connections are allowed.
+
+work:
+Trust (but not completely) connected nodes to be not harmful.
+Only certain incoming connections are allowed.
+
+home:
+You mostly trust the other network nodes, but still select
+which incoming connections are allowed.
+
+internal:
+Similar to the work zone.
+
+trusted:
+All network connections are allowed.
+
+
+- Service Management
+
+firewall-cmd --get-services
+firewall-cmd --list-services --zone=public
+
+to add a service to a zone:
+firewall-cmd --permanent --zone=trusted --add-service=dhcp
+firewall-cmd --reload
+or
+edit the files in: /etc/firewalld/services/
+
+
+- Port Management
+
+firewall-cmd --zone=trusted --list-ports
+firewall-cmd --zone=trusted --add-port=21/tcp

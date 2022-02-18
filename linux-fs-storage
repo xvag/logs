@@ -1,0 +1,233 @@
+
+# Filesystems & Storage
+
+- Filesystem Hierarchy Standard v3.0:
+https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html
+
+- (MBR back up and restore)
+sudo dd if=/dev/sda of=mbrbackup bs=512 count=1
+sudo dd if=mbrbackup of=/dev/sda bs=512 count=1
+
+- (GPT back up)
+sgdisk --backup=/tmp/sda_backup /dev/sda
+
+- create filesystem on loop device (1GB):
+dd if=/dev/zero of=/path/to/imagefile bs=1M count=1024
+mkfs.ext4 /path/to/imagefile
+mount -o loop imagefile /path/to/mntpoint
+or
+losetup -f
+ /dev/loop1
+losetup /dev/loop1 imagefile
+mount /dev/loop0 /path/to/mntpoint
+ .. after umount, do:
+losetup -d /dev/loop1
+
+blkid
+df
+du
+fdisk
+sfdisk
+parted
+gparted
+gdisk
+sgdisk
+
+partprobe -s
+cat /proc/partitions
+
+mkfs [-t fstype] [options] [device-file]
+ls /sbin/mk*
+
+mount [options] <source> <directory>
+mount -t nfs myserver:/nfs/dir /mnt/shdir
+-b block_size, eg -b 2048
+ -o ro, for read-only
+-o remount
+-o loop
+-o noexec
+
+/etc/fstab syntax:
+<file system> <mount point> <type> <options> <dump> <pass>
+myserver:/nfs/dir /mnt/nfsdir nfs rsize=8129,wsize=8129,timeo=14,intr 0 0
+
+cat /proc/swaps
+mkswap /path/to/swapfile
+swapon
+swapoff
+
+fsck [-t fstype] [options] [device-file]
+
+- force check of all mounted filesystems at boot:
+touch /forcefsck
+- forcefsck will disappear after successfull check
+
+dumpe2fs
+tune2fs
+tune2fs -L MYLABEL /dev/sda1
+e2label /dev/sda1 MYLABEL
+e4defrag (part of e2fsprogs)
+
+xfsdump
+xfsrestore
+man -k xfs
+
+btrfs --help
+man -k btrfs
+
+lsattr
+chattr [+-=][aAcCdDeijsStTu] filename
+
+quotacheck
+quotaon
+quotaoff
+edquota
+quota
+xfs_quota
+
+
+# Encryption
+
+cryptsetup [OPTION...] <action> <action-specific>
+/proc/crypto
+
+- encrypt partition:
+cryptsetup luksFormat /dev/sda1
+cryptsetup luksFormat -c aes /dev/sda1
+cryptsetup -v luksOpen /dev/sda1 SECRET
+mkfs.ext4 /dev/mapper/SECRET
+mount /dev/mapper/SECRET /mnt
+...
+umount /mnt
+cryptsetup -v luksClose SECRET
+
+vi /etc/fstab
+ /dev/mapper/SECRET /mnt ext4 defaults 0 0
+
+vi /etc/crypttab
+ SECRET /dev/sda1
+
+- encypt swap:
+cryptsetup luksFormat /dev/sda3
+cryptsetup luksOpen /dev/sda3 swapcrypt
+mkswap /dev/mapper/swapcrypt
+swapon /dev/mapper/swapcrypt
+
+vi /etc/fstab
+ /dev/mapper/swapcrypt none swap defaults 0 0
+
+vi /etc/crypttab
+ swapcrypt /dev/sda3 /dev/urandom swap,cupher=aes-cbc-essiv:sha256,size=256
+
+
+# LVM
+
+pvcreate
+pvdisplay
+pvmove
+pvremove
+
+vgcreate
+vgdisplay
+vgextend
+vgreduce
+
+lvcreate
+lvdisplay
+lvremove
+
+lvresize -r -L 20 GB /dev/VG/mylvm
+or
+lvextend -L +500M /dev/vg/mylvm
+resize2fs /dev/vg/mylvm
+
+umount /mylvm
+fsck -f /dev/vg/mylvm
+resize2fs /dev/vg/mylvm 200M
+lvreduce -L 200M /dev/vg/mylvm
+mount /dev/vg/mylvm
+or
+lvextend -r -L +100M /dev/vg/mylvm
+lvreduce -r -L -100M /dev/vg/mylvm
+
+pvmove /dev/sdc1
+vgreduce vg /dev/sdc1
+
+lvcreate -l 128 -s -n mysnap /dev/vg/mylvm
+mkdir /mysnap
+mount -o ro /dev/vg/mysnap /mysnap
+...
+umount /mysnap
+lvremove /dev/vg/mysnap
+
+- create lvm snapshot:
+$ lvcreate -L [SIZE] -s -n snapshotname /dev/vg01/lvol0
+make sure you have little extra space in backup volume
+than your original data volume (per man page 15-20% might be enough)
+
+
+# RAID
+
+mdadm
+mdadm --create /dev/md0 --level=1 --raid-disks=2 /dev/sdbX /dev/sdcX
+mkfs.ext4 /dev/md0
+bash -c "mdadm --detail --scan >> /etc/mdadm.conf"
+mkdir /myraid
+mount /dev/md0 /myraid
+
+cat /proc/mdstat
+mdadm -detail --scan
+mdadm --detail /dev/md0
+mdadm -S /dev/md0
+
+- To create a hot spare when creating the RAID array:
+mdadm --create /dev/md0 -l 5 -n3 -x 1 /dev/sda8 /dev/sda9 /dev/sda10 /dev/sda11
+
+mdadm --fail /dev/md0 /dev/sdb2
+will test the redundancy and hot spare of your array.
+
+mdadm --remove /dev/md0 /dev/sdb2
+mdadm --add /dev/md0 /dev/sde2
+
+mdadm --stop /dev/md0
+mdadm --remove /md0
+mdadm --zero-superblock /dev/sdX1
+
+echo 'MAILADDR root' >> /etc/mdadm.conf
+
+mdadm --create --verbose /dev/md0 \
+ --level=stripe --raid-devices=2 /dev/sdb1 /dev/sdc1 (real-time apps for performance)
+ --level=1 --raid-devices=2 /dev/sdb1 /dev/sdc1 (OS, important dirs eg. home)
+ --level=5 --raid-devices=3 /dev/sd[b-d]1 --spare-devices=1 /dev/sde1 (web/file servers)
+ --level=6 --raid-devices=4 /dev/sd[b-e]1 --spare-devices=1 /dev/sdf1 (file/backup servers w/ large capacity & high availability)
+ --level=10 --raid-devices=4 /dev/sd[b-e]1 --spare-devices=1 /dev/sdf1 (DB/App servers for fast I/O ops)
+
+- to enable mdmonitor, have to enable email notifications:
+1. install dma from aur
+2. # vim /etc/mdadm.conf
+...
+MAILADDR user@localhost
+...
+3. test it:
+mdadm --monitor --scan --oneshot --test
+
+
+
+# Network Filesystems
+
+yum install samba-client samba-common cifs-utils
+smbclient -L 192.168.0.10
+mkdir /media/samba
+vi /media/samba/.smbcredentials
+ 1 username=samba_username
+ 2 password=samba_password
+chmod 600 /media/samba/.smbcredentials
+vi /etc/fstab
+ //192.168.0.10/sharename /media/samba cifs credentials=/media/samba/.smbcredentilas,defaults 0 0
+mount -a
+
+yum install nfs-utils nfs-utils-lib
+mkdir /media/nfs
+vi /etc/fstab
+ 192.168.0.10/NFS-SHARE /media/nfs nfs defaults 0 0
+mount -a

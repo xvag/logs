@@ -1,0 +1,81 @@
+Host: CentOS 7
+
+- Install requisite packages:
+yum install cryptsetup device-mapper util-linux
+
+- Make sure that kernel has been compiled with encryption support:
+grep -i config_dm_crypt /boot/config-$(uname -r)
+
+# Encrypt a drive/partition
+
+-- Wipe all data from drive:
+dd if=/dev/urandom of=/dev/sdXy bs=4096
+
+-- Set the LUKS partition with defaults parameters:
+cryptsetup -y luksFormat /dev/sdXy
+
+-- Some parameters to change: --cipher, --hash, --key-size
+-- To check the options:
+cryptsetup --version
+
+-- Open the LUKS partition:
+cryptsetup luksOpen /dev/sdXy encrypted_part
+
+Now the encrypted partition is available in /dev/mapper/encrypted_part
+
+-- Format and mount the partition:
+mkfs.ext4 /dev/mapper/encrypted_part
+mount /dev/mapper/encrypted_part /mnt/encrypted
+
+-- To close the LUKS partition:
+umount /mnt/encrypted
+cryptsetup luksClose encrypted_part
+
+
+# Encrypt swap
+
+mkswap /dev/mapper/swap
+swapon /dev/mapper/swap
+- edit /etc/fstab:
+ /dev/mapper/swap none swap sw 0 0
+- edit /etc/crypttab:
+ swap /dev/sdd1 /dev/urandom swap
+- reboot
+- verify status:
+cryptsetup status swap
+
+
+# Encrypt a file-system
+
+- Create an empty file (2 GB):
+dd if=/dev/urandom of=/path/to/secretfs bs=1G count=1
+chmod 600 /path/to/secretfs
+
+- Associate a loopback device with the file:
+losetup /dev/loop0 /path/to/secretfs
+
+- Encrypt storage in the device:
+cryptsetup -y luksFormat /dev/loop0
+cryptsetup luksOpen /dev/loop0 secretfs
+
+- Check its status (optional):
+cryptsetup status secretfs
+
+- Write zeros to the new encrypted device:
+This will force the allocation of data blocks. And since the zeros
+are encrypted, this will look like random data to the outside world.
+dd if=/dev/zero of=/dev/mapper/secretfs
+
+- Create a filesystem and verify its status:
+mke2fs -j -O dir_index /dev/mapper/secretfs
+tune2fs -l /dev/mapper/secretfs
+
+- Mount the new file-system:
+mkdir /mnt/cryptofs/secretfs
+mount /dev/mapper/secretfs /mnt/cryptofs/secretfs
+
+sources:
+https://www.tecmint.com/disk-encryption-in-linux/
+https://wiki.centos.org/HowTos/EncryptTmpSwapHome
+https://wiki.centos.org/HowTos/EncryptedFilesystem
+https://wiki.archlinux.org/index.php/Dm-crypt

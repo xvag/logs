@@ -1,0 +1,36 @@
+Turns out historically FreeBSD has a problem with second IDE channel of ThinkPad X40.
+Having it enabled was causing more than just this problem- but I'll get to that in a second.
+
+### Method 1:
+Adding
+
+hint.ata.1.disabled=1
+
+to /boot/loader.conf.local seemed to do the trick.
+However things are not exactly as they seem. It appears the second IDE channel of X40 can randomly get higher assignment than 1. Hence, it will still freeze at occasional boot.
+To prevent that, lets add this instead:
+
+hint.ata.1.disabled=1
+hint.ata.1.disabled=2
+hint.ata.1.disabled=3
+hint.ata.1.disabled=4
+
+Side note: you might have to add hint.agp.0.disabled=1 to the list above to solve another unrelated issue with booting caused by an old VGA card, like the one in X40.
+
+So that covered the booting problem!
+BUT the channel was still enabled on hardware level, which was causing another issue: impossibility to reboot or shutdown the machine, because it was freezing on the last shutdown stage. It was necessary to do hard power-off by holding the power button. Obviously, this is not an ideal scenario on a remote router.
+
+Therefore
+
+### Method 2:
+I disabled the second channel using IBM's DOS config program (like so: https://forums.pcbsd.org/printthread.php?tid=4257 ). I edited Win98SE boot ISO and added PS2 to it. It is attached to this post (hope that's ok), so just boot from it, change drive to C: or D: and run
+
+PS2.EXE IDE2 DISABLE
+
+Et voila!
+
+So finally the system seems to be working fine!
+(At least after limited testing. Knock on wood..)
+
+
+src: https://forum.netgate.com/topic/108966/solved-pfsense-won-t-boot-on-an-old-thinkpad-x40/8

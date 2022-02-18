@@ -1,0 +1,62 @@
+
+- enable virtualization support in BIOS
+
+- download/burn debian installer
+http://cdimage.debian.org/debian-cd/current/amd64/iso-cd/
+
+- boot in bios mode (not uefi)
+
+- install debian with this disk layout:
+sda1 - /boot 200MB (ext2)
+sda2 - / 15GB (ext3 or 4)
+sda3 - swap
+sda4 - reserved for LVM
+
+- install xen:
+apt-get install xen-system-amd64
+
+- setup lvm:
+apt-get install lvm2
+pvcreate /dev/sda4
+vgcreate vg0 /dev/sda4
+lvcreate -n <name of the volume> -L <size, you can use G and M here> <volume group>
+eg.
+lvcreate -n database-data -L 100G vg0
+- to create a snapshot:
+lvcreate -s /dev/vg0/database-data -ndatabase-backup -L5G
+```
+
+- setup linux bridge:
+
+apt-get install bridge-utils
+
+vi /etc/network/interfaces
+ auto lo
+ iface lo inet loopback
+
+ auto eth0
+ iface eth0 inet manual
+
+ auto xenbr0
+ iface xenbr0 inet dhcp
+ bridge_ports eth0
+
+service networking restart
+
+brctl show
+
+
+- configure grub:
+dpkg-divert --divert /etc/grub.d/08_linux_xen --rename /etc/grub.d/20_linux_xen
+update-grub
+vi /etc/xen/xend-config.sxp
+ uncomment (network-script network-bridge)
+
+- reboot
+
+- basic xen commands:
+xl info
+xl list
+xl top
+
+https://wiki.xenproject.org/wiki/Xen_Project_Beginners_Guide

@@ -1,0 +1,50 @@
+
+- Create the same partition scheme on a diffent disk:
+ for this example:
+ sda1 = 1G EFI System (ef)
+ sda2 = the rest GBs Linux fs (83)
+
+mkfs.fat -F32 /dev/sda1
+or
+mkfs.vfat /dev/sda1
+
+mkfs.xfs /dev/sda2
+
+mount /dev/sda1 /mnt/boot
+mount /dev/sda2 /mnt/root
+
+
+- Sync the data as root:
+(after the first time use --delete flag too)
+rsync -aAXH --info=progress2 --exclude={"/boot/*","/swapfile","/dev/*","/proc/*","/sys/*","/tmp/*","/run/*","/mnt/*","/media/*","/lost+found"} / /mnt/root
+rsync -aAXH --info=progress2 /boot/ /mnt/boot
+
+
+- Boot live arch from usb:
+(if system is efi, boot in uefi mode)
+
+mount /dev/sda2 /mnt
+mount /dev/sda1 /mnt/boot
+genfstab -U /mnt >> /mnt/etc/fstab
+
+- remove/comment-out previous fstab entries
+
+arch-chroot /mnt
+
+dd if=/dev/zero of=/swapfile bs=1M count=8192
+chmod 600 /swapfile
+mkswap /swapfile
+swapon /swapfile
+
+mkinitcpio -p linux
+(not sure if this necessary)
+
+grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=grub
+grub-mkconfig -o /boot/grub/grub.cfg
+
+exit /*from chroot*/
+umount -R /mnt
+reboot /*into the new system*/
+
+src:
+https://www.linuxsecrets.com/archlinux-wiki/wiki.archlinux.org/index.php/Full_system_backup_with_rsync.html

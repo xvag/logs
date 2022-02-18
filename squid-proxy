@@ -1,0 +1,127 @@
+Host: CentOS 7
+
+yum install squid
+systemctl start/enable squid
+firewall-cmd --permanent --zone=public --add-service=squid
+
+- config file: /etc/squid/squid.conf
+[...]
+# IP network from where browsing should be allowed
+acl localnet src 192.168.1.0/24
+[...]
+http_access allow localnet
+http_access allow localhost
+[...]
+
+- get a live view of requests being served through Squid:
+tail -f /var/log/squid/access.log
+
+- restrict access by client or domain:
+vim /etc/squid/squid.conf
+ [...]
+ acl theclient src 192.168.1.134
+ acl forbidden dstdomain "/etc/squid/forbidden_domains"
+ [...]
+ http_access allow localnet !theclient !forbidden
+ [...]
+
+# example of /etc/squid/forbidden_domains:
+# the leading . is used to indicate subdomains as well
+.facebook.com
+.twitter.com
+[...]
+
+- allow access certain times:
+vim /etc/squid/squid.conf
+ [...]
+ # M(onday), W(ednesday), F(riday), from 10 to 11
+ acl someDays time MWF 10:00-11:00
+ [...]
+ http_access allow forbidden someDays
+ http_access deny forbidden
+ [...]
+
+- user authentication:
+vim /etc/squid/squid.conf
+ [...]
+ auth_param basic program /usr/lib64/squid/basic_ncsa_auth /etc/squid/passwd
+ auth_param basic credentialsttl 30 minutes
+ auth_param basic casesensitive on
+ auth_param basic realm Testing Squid proxy-caching web server
+ acl ncsa proxy_auth REQUIRED
+ [...]
+ http_access allow ncsa
+ [...]
+
+- create the file and add credentials for user admin (omit the -c flag if the file already exists):
+htpasswd -c /etc/squid/passwd admin
+
+- use cache:
+vim /etc/squid/squid.conf
+ [...]
+ cache_dir ufs /var/spool/squid 1000 16 256
+ maximum_object_size 100 MB
+ [...]
+
+- blacklist with squidguard:
+--Enable EPEL repo and install squidGuard:
+wget http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+rpm -ivh epel-release-latest-7.noarch.rpm
+yum install squidGuard
+
+--Blacklists are plain text files that will allow you to implement
+content filters based on specific keywords. Some download links:
+http://www.squidguard.org/blacklists.html
+
+-- copy blacklists to the appropriate dir:
+cp -a /path/to/blacklist/dir /var/lib/squidguard/db
+
+-- create squidguard's database files:
+squidGuard -C all
+
+-- change the ownership of the /var/lib/squidguard/db/:
+chown -R squid:squid /var/lib/squidguard/db/
+
+-- configure Squid to use squidGuard:
+echo "url_rewrite_program $(which squidGuard)" >> /etc/squid/squid.conf
+
+-- add the necessary directives to squidGuard's configuration file:
+vim /etc/squid/squidGuard.conf
+ # eg. blacklist dir = /warez/
+ src localnet {
+ ip      192.168.1.0/24
+ }
+ dest warez {
+ domainlist      warez/domains
+ urllist         warez/urls
+ }
+ acl {
+ localnet {
+ pass     !warez !in-addr all
+ redirect http://www.lds.org
+ }
+ default {
+ pass     local none
+ }
+ }
+
+# Set proxy for command line
+- Check the current proxy server settings:
+env | grep -i proxy
+
+- Export proxy server settings:
+export {http,https,ftp}_proxy="http://PROXY_SERVER:PORT"
+
+- Check your public IP address:
+wget -q -O - checkip.dyndns.org | sed -e 's/.*Current IP Address: //' -e 's/<.*$//'
+
+
+sources:
+https://www.tecmint.com/configure-squid-server-in-linux/
+https://www.tecmint.com/configure-squidguard-for-squid-proxy/
+https://hostpresto.com/community/tutorials/how-to-install-and-configure-squid-proxy-on-centos-7/
+https://www.shellhacks.com/linux-proxy-server-settings-set-proxy-command-line/
+https://www.cyberciti.biz/faq/linux-unix-set-proxy-environment-variable/
+https://wiki.archlinux.org/index.php/Squid
+http://www.squidguard.org/index.html
+http://www.squid-cache.org/

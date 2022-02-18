@@ -1,0 +1,81 @@
+The SPICE project aims to provide a complete open source solution
+for remote access to virtual machines in a seamless way.
+SPICE can only be used when using QXL as the graphical output.
+
+pacman -S libvirt virt-viewer spice
+
+- Start VM and install the GUEST drivers
+- Shutdown VM
+
+- start VM
+qemu-system-x86_64 --enable-kvm -m 8G \
+-vga qxl -drive file=Win7.raw,format=raw \
+-spice unix,addr=/tmp/vm_spice.socket,disable-ticketing \
+-device virtio-serial-pci \
+-device virtserialport,chardev=spicechannel0,name=com.redhat.spice.0 \
+-chardev spicevmc,id=spicechannel0,name=vdagent \
+-device ich9-usb-ehci1,id=usb \
+-device ich9-usb-uhci1,masterbus=usb.0,firstport=0,multifunction=on \
+-chardev spicevmc,name=usbredir,id=usbredirchardev1 \
+-device usb-redir,chardev=usbredirchardev1,id=usbredirdev1 \
+-device ich9-usb-uhci2,masterbus=usb.0,firstport=2 \
+-chardev spicevmc,name=usbredir,id=usbredirchardev2 \
+-device usb-redir,chardev=usbredirchardev2,id=usbredirdev2 \
+-daemonize
+
+- start virt-viewer
+if
+ -spice port=5930,disable-ticketing
+then
+remote-viewer spice://127.0.0.1:5930
+
+if
+-spice unix,addr=/tmp/vm_spice.socket,disable-ticketing
+then
+remote-viewer spice+unix:///tmp/vm_spice.socket
+
+(Using Unix sockets instead of TCP ports does not involve
+using network stack on the host system, so it is reportedly better for performance)
+
+- booting with SPICE as the remote desktop protocol, including the support for copy and paste from host
+-device virtio-serial-pci \
+-device virtserialport,chardev=spicechannel0,name=com.redhat.spice.0 \
+-chardev spicevmc,id=spicechannel0,name=vdagent \
+
+(The `-device virtio-serial-pci` option adds the virtio-serial device,
+`-device virtserialport,chardev=spicechannel0,name=com.redhat.spice.0` opens a port for spice vdagent in that device
+and `-chardev spicevmc,id=spicechannel0,name=vdagent` adds a spicevmc chardev for that port.
+It is important that the `chardev=` option of the virtserialport device matches the `id=` option given to the chardev option (spicechannel0 in this example).
+It is also important that the port name is `com.redhat.spice.0`, because that is the namespace where vdagent is looking for in the guest.
+And finally, specify `name=vdagent` so that spice knows what this channel is for.)
+
+
+- USB redirection with SPICE
+(We need to add one EHCI/UHCI controller per available USB redirection slot desired as well as one SPICE redirection channel per slot.)
+-device ich9-usb-ehci1,id=usb \
+
+first usb slot:
+-device ich9-usb-uhci1,masterbus=usb.0,firstport=0,multifunction=on \
+-chardev spicevmc,name=usbredir,id=usbredirchardev1 \
+-device usb-redir,chardev=usbredirchardev1,id=usbredirdev1 \
+
+second usb slot:
+-device ich9-usb-uhci2,masterbus=usb.0,firstport=2 \
+-chardev spicevmc,name=usbredir,id=usbredirchardev2 \
+-device usb-redir,chardev=usbredirchardev2,id=usbredirdev2 \
+
+third usb slot:
+-device ich9-usb-uhci3,masterbus=usb.0,firstport=4 \
+-chardev spicevmc,name=usbredir,id=usbredirchardev3 \
+-device usb-redir,chardev=usbredirchardev3,id=usbredirdev3 \
+
+etc...
+
+sources:
+https://www.spice-space.org/
+https://virt-manager.org/
+https://libvirt.org/
+https://wiki.archlinux.org/index.php/libvirt
+https://wiki.archlinux.org/index.php/QEMU#SPICE
+https://wiki.archlinux.org/index.php/QEMU#USB_redirection_with_SPICE
+http://www.linux-kvm.org/page/SPICE

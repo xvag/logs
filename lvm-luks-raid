@@ -1,0 +1,42 @@
+LVM on LUKS on RAID
+
+- create raid:
+apt install mdadm
+mdadm -V
+mdadm --create --verbose /dev/md0 --level=5 --raid-devices=4 /dev/sda /dev/sdb /dev/sdc /dev/sdd
+cat /proc/mdstat
+
+- encrypt the raid:
+modprobe dm-crypt
+cryptsetup --cipher=aes-xts-plain --verify-passphrase --key-size=512 luksFormat /dev/md0
+cryptsetup luksOpen /dev/md0 cryptraid
+
+- create the lvm:
+pvcreate /dev/mapper/cryptraid
+pvdisplay
+vgcreate vgroup /dev/mapper/cryptraid
+vgdisplay
+lvcreate --size 20G --name lvtest vgroup
+lvdisplay
+
+- how to automount without passphrase:
+dd if=/dev/random bs=32 count=1 of=/root/lukskey
+xdd /root/lukskey
+cryptsetup luksAddKey /dev/md0 /root/lukskey
+cryptsetup luksDump /dev/md0
+
+vim /etc/crypttab
+ ...
+ cryptraid /dev/md0 /root/lukskey
+ ...
+
+vim /etc/fstab
+ ...
+ /dev/mapper/lvtest /mnt/lvtest ext4 defaults 0 0
+ ...
+
+
+src:  
+https://www.digitalocean.com/community/tutorials/how-to-create-raid-arrays-with-mdadm-on-debian-9
+http://jasonwryan.com/blog/2012/02/11/lvm/
+https://www.golinuxcloud.com/mount-luks-encrypted-disk-partition-linux/

@@ -1,0 +1,53 @@
+
+
+Network Time Protocol – NTP- is a protocol which runs over port 123 UDP
+at Transport Layer and allows computers to synchronize time over networks
+for an accurate time. While time is passing by, computers internal clocks
+tend to drift which can lead to inconsistent time issues, especially on
+servers and clients logs files or if you want to replicate servers
+resources or databases.
+
+- install ntp server
+yum install ntp
+
+- choose pool zone from https://www.pool.ntp.org/
+
+- replace the default servers in the config file:
+vim /etc/ntp.conf
+ ...
+ server 0.gr.pool.ntp.org
+ server 3.europe.pool.ntp.org
+ server 1.europe.pool.ntp.org
+ ...
+
+- allow clients from your networks to synchronize time with this server:
+vim /etc/ntp.conf
+ ...
+ restrict 192.168.1.0 netmask 255.255.255.0 nomodify notrap
+ ...
+
+(The nomodify notrap statements suggest that your clients are not allowed
+to configure the server or be used as peers for time sync.)
+
+- add a log file statement:
+vim /etc/ntp.conf
+ ...
+ logfile /var/log/ntp.log
+ ...
+
+- configure firewall:
+firewall-cmd --permanent --add-service=ntp
+firewall-cmd --reload
+
+- start/enable ntp service:
+systemctl start|enable|status ntpd
+
+- verify server time sync:
+ntpq -p
+date -R
+
+- query and synchronize against a pool of your choice:
+ntpdate -q  0.ro.pool.ntp.org  1.ro.pool.ntp.org
+
+
+src: https://www.tecmint.com/install-ntp-server-in-centos/

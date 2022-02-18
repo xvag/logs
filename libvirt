@@ -1,0 +1,174 @@
+
+- install server
+pacman -S libvirt
+
+- for the default NAT/DHCP networking
+pacman -S ebtables dnsmasq
+
+- for bridged networking
+pacman -S bridge-utils
+
+for remote management over ssh
+pacman -S openbsd-netcat
+
+install client
+pacman -S virt-manager virt-viewer
+
+- set up authentication - using polkit:
+The libvirt daemon provides two polkit actions in /usr/share/polkit-1/actions/org.libvirt.unix.policy:
+	org.libvirt.unix.manage for full management access (RW daemon socket), and
+	org.libvirt.unix.monitor for monitoring only access (read-only socket).
+
+The default policy for the RW daemon socket will require to authenticate as an admin.
+This is akin to sudo auth, but does not require that the client application ultimately run as root.
+Default policy will still allow any application to connect to the RO socket.
+
+Arch defaults to consider anybody in the wheel group as an administrator:
+this is defined in /etc/polkit-1/rules.d/50-default.rules
+Therefore there is no need to create a new group and rule file if your user is a member of the wheel group:
+upon connection to the RW socket (e.g. via virt-manager) you will be prompted for your user's password.
+
+- starting the daemons
+systemctl start libvirtd.service
+systemctl start virtlogd.service
+
+- Optionally enable libvirtd.service
+There is no need to enable virtlogd.service, since libvirtd.service, when enabled, also enables the virtlogd.socket and virtlockd.socket units.
+
+- To test if libvirt is working properly on a system level:
+virsh -c qemu:///system
+
+- To test if libvirt is working properly for a user-session:
+virsh -c qemu:///session
+
+
+# Management
+
+- print active and inactive storage pools
+virsh pool-list --all
+
+- create a new pool using virsh
+-- define a directory
+virsh pool-define-as poolname dir - - - - /home/username/.local/libvirt/images
+-- define a LVM volume
+virsh pool-define-as poolname fs - -  /dev/vg0/images - mntpoint
+
+Tip: For LVM storage pools:
+It is a good practice to dedicate a volume group to the storage pool only.
+Choose a LVM volume group that differs from the pool name,
+otherwise when the storage pool is deleted the LVM group will be too.
+
+The above command defines the information for the pool
+- to build it:
+virsh pool-build poolname
+virsh pool-start poolname
+virsh pool-autostart poolname
+
+- to remove it:
+virsh pool-destroy poolname
+virsh pool-delete poolname
+virsh pool-undefine  poolname
+
+- manage volumes
+Once the pool has been created, volumes can be created inside the pool.
+If building a new domain (virtual machine), this step can be skipped
+as a volume can be created in the domain creation process.
+
+virsh vol-create-as      poolname volumename 10GiB --format aw|bochs|raw|qcow|qcow2|vmdk
+virsh vol-upload  --pool poolname volumename volumepath
+virsh vol-list           poolname
+virsh vol-resize  --pool poolname volumename 12GiB
+virsh vol-delete  --pool poolname volumename
+virsh vol-dumpxml --pool poolname volumename  # for details.
+
+- manage domains
+virsh list --all
+
+- create new domain - examples
+-- Arch Linux install (two GiB, qcow2 format volume create; user-networking):
+virt-install  \
+  --name arch-linux_testing \
+  --memory 1024             \
+  --vcpus=2,maxvcpus=4      \
+  --cpu host                \
+  --cdrom $HOME/Downloads/arch-linux_install.iso \
+  --disk size=2,format=qcow2  \
+  --network user            \
+  --virt-type kvm
+
+
+-- Fedora testing (Xen hypervisor, non-default pool, do not originally view):
+virt-install  \
+  --connect xen:///     \
+  --name fedora-testing \
+  --memory 2048         \
+  --vcpus=2             \
+  --cpu=host            \
+  --cdrom /tmp/fedora20_x84-64.iso      \
+  --os-type=linux --os-variant=fedora20 \
+  --disk pool=testing,size=4            \
+  --network bridge=br0                  \
+  --graphics=vnc                        \
+  --noautoconsole
+
+virt-viewer --connect xen:/// fedora-testing
+
+-- Windows:
+virt-install \
+  --name=windows7           \
+  --memory 2048             \
+  --cdrom /dev/sr0          \
+  --os-variant=win7         \
+  --disk /mnt/storage/domains/windows7.qcow2,size=20GiB \
+  --network network=vm-net  \
+  --graphics spice
+
+- import existing volume:
+virt-install  \
+  --name demo  \
+  --memory 512 \
+  --disk /home/user/VMs/mydisk.img \
+  --import
+
+- delete/remove domain:
+virsh undefine domain
+
+- start domain:
+virsh start domain
+virt-viewer --connect qemu:///session domain
+
+- shutdown/force off domain:
+virsh shutdown domain
+virsh destroy  domain
+
+- autostart domain on libvirtd start:
+virsh autostart domain
+virsh autostart domain --disable
+
+- shutdown domain on host shutdown:
+Running domains can be automatically suspended/shutdown at host shutdown
+using the libvirt-guests.service systemd service.
+This same service will resume/startup the suspended/shutdown domain
+automatically at host startup.
+Read /etc/conf.d/libvirt-guests for service options.
+
+- edit a domain's XML configuration:
+virsh edit domain
+
+- clone domain
+virt-clone --original {Domain-Vm-Name-Here} --auto-clone
+or
+virt-clone --original {Domain-Vm-Name-Here} --name {New-Domain-Vm-Name-Here} --auto-clone
+or
+virt-clone --original {Domain-Vm-Name-Here} --name {New-Domain-Vm-Name-Here} --file {/var/lib/libvirt/images/File.Name.here}
+
+- fixes
+-- No polkit authentication agent found:
+usermod --append --groups libvirt $(whoami)
+
+
+sources:
+https://wiki.archlinux.org/index.php/Libvirt
+https://jamielinux.com/docs/libvirt-networking-handbook/index.html
+https://libvirt.org/formatdomain.html
+https://wiki.libvirt.org/page/Networking

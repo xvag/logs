@@ -1,0 +1,78 @@
+
+# only for privileged containers
+
+pacman -S lxc arch-install-scripts
+
+- host network config:
+
+vi /etc/default/lxc-net
+ USE_LXC_BRIDGE="true"
+ LXC_BRIDGE="lxcbr0"
+ LXC_ADDR="10.0.3.1"
+ LXC_NETMASK="255.255.255.0"
+ LXC_NETWORK="10.0.3.0/24"
+ LXC_DHCP_RANGE="10.0.3.2,10.0.3.254"
+ LXC_DHCP_MAX="253"
+
+vi /etc/lxc/default.conf
+ lxc.net.0.type = veth
+ lxc.net.0.link = lxcbr0
+ lxc.net.0.flags = up
+ lxc.net.0.hwaddr = 00:16:3e:xx:xx:xx
+
+- dnsmasq is a dependency for lxcbr0
+pacman -S dnsmasq
+
+- start the bridge
+systemctl start lxc-net
+
+For privileged containers, simply select a template from /usr/share/lxc/templates
+that matches the target distro to containerize.
+Users wishing to containerize non-Arch distros will need
+additional packages on the host depending on the target distro.
+
+create the container - in this exaple CONTAINER_NAME = archtest
+installs the root filesystem of the LXC to /var/lib/lxc/CONTAINER_NAME/rootfs by default.
+
+lxc-create -n archtest -t /usr/share/lxc/templates/lxc-archlinux
+
+
+- basic config with networking:
+vi /var/lib/lxc/archtest/config
+ ## default values
+ lxc.rootfs.path = /var/lib/lxc/playtime/rootfs
+ lxc.uts.name = playtime
+ lxc.arch = x86_64
+ lxc.include = /usr/share/lxc/config/archlinux.common.conf
+
+ ## network
+ lxc.net.0.type = veth
+ lxc.net.0.link = br0
+ lxc.net.0.flags = up
+ lxc.net.0.name = eth0
+ lxc.net.0.hwaddr = ee:ec:fa:e9:56:7d
+ # uncomment the next two lines if static IP addresses are needed
+ # leaving these commented will imply DHCP networking
+ #
+ #lxc.net.0.ipv4.address = 192.168.0.3/24
+ #lxc.net.0.ipv4.gateway = 192.168.0.1
+
+- list installed containers:
+lxc-ls -f
+
+- start and stop:
+lxc-start -n CONTAINER_NAME
+lxc-stop -n CONTAINER_NAME
+
+- login to container:
+lxc-console -n CONTAINER_NAME
+
+- attach to container:
+(similar to lxc-console but accessing root prompt, bypassing login)
+lxc-attach -n CONTAINER_NAME --clear-env
+
+- create clones:
+lxc-copy -n CONTAINER_NAME -N CLONE_NAME -B overlayfs -s
+
+- destroy containers:
+lxc-destroy -n CONTAINER_NAME -f

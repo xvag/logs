@@ -1,0 +1,40 @@
+int x, i
+float y, _AB
+
+str string1 = "this is a string"
+
+str string2
+string2 ="this is another string"
+
+z = fi // psi + 3
+
+k = [12, -6.77, "hi", AbC 12, "elem", 5.e-66]
+
+k[0] /= 3 / 5
+
+k[4] = len(string2) 
+
+length = len(string1)
+
+t = type(y)
+
+y = -3.e22
+
+x = input('Dose timi gia x:')
+
+var = input()
+
+print('print this string')
+
+x += i # this is comment
+
+i = 5 % -.4e+3
+
+y %= -0.55e+66
+
+VAR_NAME = i/(+5.e-9*_AB) - (34+ff**2)/22
+
+_AB = y**-1.4  """ this is a loooo
+oooooooo
+ooooooooooooooooo
+oooong comment """

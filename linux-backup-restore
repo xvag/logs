@@ -1,0 +1,84 @@
+
+- Backup methods:
+Full: Backup all files on the system.
+Incremental: Backup all files that have changed
+             since the last incremental or full backup.
+Differential: Backup all files that have changed
+              since the last full backup.
+Multiple level incremental: Backup all files that have changed
+     since the previous backup at the same or a previous level.
+User: Backup only files in a specific user's directory.
+
+- Backup strategies:
+An example of one useful strategy:
+1. Use tape 1 for a full backup on Friday.
+2. Use tapes 2-5 for incremental backups on Monday-Thursday.
+3. Use tape 6 for full backup on second Friday.
+4. Use tapes 2-5 for incremental backups on second Monday-Thursday.
+5. Do not overwrite tape 1 until completion of full backup on tape 6.
+6. After full backup to tape 6, move tape 1 to external location for disaster
+   recovery.
+7. For next full backup (next Friday) get tape 1 and exchange for tape 6.
+A good rule of thumb is to have at least two weeks of backups available.
+
+
+- backup with dd:
+dd if=/dev/sda of=/system_images/sda.img
+dd if=/dev/sda | gzip -c > /system_images/sda.img.gz
+
+- restore with dd:
+dd if=/system_images/sda.img of=/dev/sda
+gzip -dc /system_images/sda.img.gz | dd of=/dev/sda
+
+
+- backup/restore with tar:
+-- create an archive:
+tar -cvf /dev/st0 /path/to/be/archived/
+-- create with multi-volume option:
+tar -cMf /dev/st0 /path/to/be/archived/
+-- verify files after the backup:
+tar -dvf /dev/st0
+-- extract from archive:
+tar -xpvf /dev/st0 [--directory DIR]
+(-p = --same-permissions)
+-- restore specific files:
+tar -xvf /dev/st0 somefile
+-- list contents:
+tar -tvf /dev/st0
+-- delete/update files in an archive:
+tar --delete --file files.tar file4
+tar --update --file files.tar file4
+-- incremental backup:
+tar -cN '2018-01-01' -vf backup.tar /path/to/be/archived/
+(-N = --newer = --after-date)
+-- archive compression:
+-z: gzip(.gz)
+-j: bzip2(.bz2), xz(.xz)
+
+
+- backup with rsync:
+rsync -av --progress src_dir dest_dir
+-- tip: with a trailing slash on src_dir, it will sync the files inside the dir.
+--      without the trailing slash, it will also create a dir called src_dir and then sync.
+-- over ssh:
+rsync -avzhe ssh backups/ root@remote_host:/remote_dir/
+-- various options:
+rsync -av --include '*.conf' --exclude '*' src_dir dest_dir
+ --delete (del all files that are not in src_dir)
+ --max-size='200k'
+ --remove-source-files
+ --dry-run (no changes - test)
+ --bwlimit=100 (bandwidth limit)
+ -W (sync whole file - not only changes)
+
+
+- create an archive with cpio:
+ls | cpio [-o|--create] -O [/dev/st0 | /path/to/archive.cpio]
+- with compression
+find /path/to/dir/ | cpio -o -c | gzip -c > /path/to/archive.cpio.gz
+- extract from an archive:
+cpio -id < /path/to/archive.cpio
+cpio [-i|--extract] somefile -I /dev/st0
+- list contents of an archive:
+cpio [-t|--list] -I /dev/st0
+cpio -ivt < /path/to/archive.cpio

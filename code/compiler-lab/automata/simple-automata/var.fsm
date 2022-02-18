@@ -1,0 +1,4 @@
+V0:	_ a-z A-Z	-> V1
+V1:	_ a-z A-Z 0-9	-> V1
+	\n	-> GOOD
+GOOD(OK):

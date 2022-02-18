@@ -1,0 +1,133 @@
+
+## Logs
+
+- boot process duration
+systemd-analyze
+
+- time spent by each task during the boot process:
+systemd-analyze blame
+
+- journalctl logs are stored in /run/log/journal
+- config file = /etc/systemd/journald.conf
+
+- get all the events since the last boot:
+journalctl -b
+
+- get all the events with a syslog priority of err:
+journalctl -p err
+
+- get all the events related to the crond process in the journal:
+journalctl /sbin/crond
+journalctl -u crond
+
+- get the 10 last events and wait for any new one:
+journalctl -f
+
+sudo tail -f /var/log/messages
+          or /var/log/syslog
+
+dmesg -w
+
+/usr/sbin/logrotate
+/etc/cron.daily/logrotate
+/etc/logrotate.conf
+
+/var/log
+
+/proc/
+
+/proc/sys/
+sysctl kernel.threads-max=100000
+bash -c 'echo 100000 > /proc/sys/kernel/threads.max'
+
+/sys/
+
+sar [ options ] [ interval ] [ count ]
+
+
+## Processes
+
+ulimit [options] [limit]
+/etc/security/limits.conf
+
+nice -n 5 command [ARGS]
+/etc/security/limits.conf
+renice +3 13848
+
+ldd /usr/bin/vi
+ldconfig
+/etc/ld.so.conf
+LD_LIBRARY_PATH
+
+ls -F /proc
+cat /proc/cpuinfo
+    /proc/meminfo
+    /proc/mounts
+    /proc/swaps
+    /proc/version
+    /proc/partitions
+    /proc/interrupts
+
+- summary of System V IPC activity (oldschool)
+ipcs
+
+kill
+killall
+pkill
+
+- test before pkill
+pgrep -l -u <username>
+
+ps
+ps -o [pid,uid,pri,ni,cputime,pmem,cmd,stat ...]
+pstree
+top
+uptime
+mpstat
+iostat
+numastat
+strace
+
+
+## Memory
+
+free
+pmap
+vmstat [options] [delay] [count]
+
+/proc/sys/vm/
+/proc/meminfo
+
+/proc/sys/vm/overcommit_memory
+/proc/[pid]/oom_score
+
+
+## I/O
+
+iostat
+iotop
+ionice [-c class] [-n priority] [-p pid ] [COMMAND [ARGS] ]
+
+cat /sys/block/sda/queue/scheduler
+echo cfq > /sys/block/sda/queue/scheduler
+cat /sys/block/sda/queue/rotational
+/sys/block/<device>/queue/iosched
+
+bonnie++ --help
+time sudo bonnie++ -n 0 -u 0 -r 100 -f -b -d /mnt
+ -n 0: don’t perform the file creation tests
+ -u 0: run as root
+ -r 100: pretend you have 100 MB of RAM
+ -f: skip per character I/O tests
+ -b: do a fsync after every write,
+     which forces flushing to disk rather than just writing to cache
+ -d /mnt: specifies the directory to place the temporary file created
+
+(http://sourceforge.net/projects/fsmark/)
+yum install glibc-static
+
+- create 1000 files, each 10 KB in size, and after each write perform an fsync to flush out to disk:
+fs_mark -d /tmp -n 1000 -s 10240
+
+- gather extended iostat statistics with:
+iostat -x -d /dev/sda 2 20

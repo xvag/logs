@@ -1,0 +1,75 @@
+Host: Centos 7
+
+yum install vsftpd ftp
+
+systemctl start/enable vsftpd
+
+- sample config file:
+vi /etc/vsftpd/vsftpd.conf
+ ...
+ # enable anonymous login
+ anonymous_enable=YES
+ ...
+ # enable system users
+ local_enable=YES
+ ...
+ no_anon_password=YES
+ allow_writeable_chroot=YES
+ ...
+ # enable system users to upload
+ write_enable=YES
+ ...
+ # restrict authenticated system users to their home directories
+ chroot_local_user=YES
+ chroot_list_enable=YES
+ chroot_list_file=/etc/vsftpd/chroot_list
+ ...
+ local_umask=022
+ dirmessage_enable=YES
+ xferlog_enable=YES
+ connect_from_port_20=YES
+ xferlog_std_format=YES
+ ftpd_banner=Welcome to Testing FTP service.
+ pam_service_name=vsftpd
+ userlist_enable=YES
+ tcp_wrappers=YES
+ ascii_upload_enable=YES
+ ascii_download_enable=YES
+ ...
+ # choose one only
+ listen=YES
+ listen_ipv6=NO
+ ...
+ # limit the available bandwidth for anonymous logins (10 KB)
+ # and authenticated users (20 KB) in bytes per second
+ # and restrict the number of simultaneous connections per IP address to 5
+ anon_max_rate=10240
+ local_max_rate=20480
+ max_per_ip=5
+ ...
+ # restrict the data channel to TCP ports 15000 through 15500
+ pasv_enable=YES
+ pasv_max_port=15500
+ pasv_min_port=15000
+
+
+- Have to create the /etc/vsftpd/chroot_list file.
+
+- Set this SELinux flag:
+setsebool -P ftpd_full_access 1
+
+- Allow traffic through firewalld:
+firewall-cmd --permanent --add-service=ftp
+firewall-cmd --permanent --add-port=15000-15500
+firewall-cmd --reload
+
+- The default dir for public anonymous login is `/var/ftp`
+
+- System users are chrooted in their home dir.
+
+sources:
+https://httpd.apache.org/docs/2.4/
+https://wiki.centos.org/HowTos/Https
+https://www.tecmint.com/setup-ftp-anonymous-logins-in-linux/4/
+https://www.unixmen.com/install-configure-ftp-server-centos-7/
+https://wiki.archlinux.org/index.php/Very_Secure_FTP_Daemon

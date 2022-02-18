@@ -1,0 +1,15 @@
+
+dd if=filename.iso of=/dev/sdb1 bs=4k
+src: https://superuser.com/questions/591234/how-to-create-a-bootable-usb-from-a-bootable-iso-with-the-command-line-on-linux
+
+- hybrid mode:
+isohybrid filename.iso
+src: https://www.syslinux.org/wiki/index.php?title=Doc/isolinux#HYBRID_CD-ROM.2FHARD_DISK_MODE
+isohybrid.pl: https://github.com/xvag/xvag.github.io/blob/master/code/perl/isohybrid.pl
+
+- with bash script:
+https://github.com/xvag/xvag.github.io/blob/master/code/bash/bootiso.sh
+src: https://www.tecmint.com/create-bootable-usb-in-linux-commandline/
+
+- Multiboot USB:
+https://wiki.archlinux.org/index.php/Multiboot_USB_drive

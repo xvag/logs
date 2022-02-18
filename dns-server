@@ -1,0 +1,136 @@
+
+- Setup a caching DNS server (server's ip=192.168.1.100)
+
+yum install bind bind-utils
+
+vi /etc/named.conf
+ ...
+ listen-on port 53 { 127.0.0.1; 192.168.1.100; any; };
+ allow-query { localhost; any; };
+ allow-query-cache { localhost; any; };
+ ...
+
+ownership of /etc/named.conf should be root:named,
+and SELinux context named_conf_t
+Same with /etc/named.rfc1912.zones
+
+- test DNS configuration for syntax errors:
+named-checkconf /etc/named.conf
+
+systemctl restart|enable named
+
+firewall-cmd --permanent --add-port=53/udp
+firewall-cmd --permanent --add-service=dns
+firewall-cmd --reload
+
+- if you wish to deploy DNS server within chroot enviroment:
+yum install bind-chroot
+systemctl restart named
+ln -s /etc/named.conf /var/named/chroot/etc/named.conf
+
+- configure client to use this server as DNS server:
+vi /etc/sysconfig/network-scripts/ifcfg-eth0
+ ...
+ DNS=192.168.1.100
+ ...
+
+vi /etc/resolv.conf
+ ...
+ nameserver 192.168.1.100
+ ...
+
+- try configuration with dig and check query time, etc.:
+dig linux.org
+
+
+- Configure a zone
+vi /etc/named.conf
+ ...
+ zone "unixmen.local" IN {
+ type master;
+ file "forward.unixmen";
+ allow-update { none; };
+ };
+
+ zone "1.168.192.in-addr.arpa" IN {
+ type master;
+ file "reverse.unixmen";
+ allow-update { none; };
+ };
+ ...
+
+- create the zone files:
+vi /var/named/forward.unixmen
+ $TTL 86400
+ @   IN  SOA     masterdns.unixmen.local. root.unixmen.local. (
+         2011071001  ;Serial
+         3600        ;Refresh
+         1800        ;Retry
+         604800      ;Expire
+         86400       ;Minimum TTL
+ )
+ @       IN  NS          masterdns.unixmen.local.
+ @       IN  NS          secondarydns.unixmen.local.
+ @       IN  A           192.168.1.101
+ @       IN  A           192.168.1.102
+ @       IN  A           192.168.1.103
+ masterdns       IN  A   192.168.1.101
+ secondarydns    IN  A   192.168.1.102
+ client          IN  A   192.168.1.103
+
+vi /var/named/reverse.unixmen
+ $TTL 86400
+ @   IN  SOA     masterdns.unixmen.local. root.unixmen.local. (
+         2011071001  ;Serial
+         3600        ;Refresh
+         1800        ;Retry
+         604800      ;Expire
+         86400       ;Minimum TTL
+ )
+ @       IN  NS          masterdns.unixmen.local.
+ @       IN  NS          secondarydns.unixmen.local.
+ @       IN  PTR         unixmen.local.
+ masterdns       IN  A   192.168.1.101
+ secondarydns    IN  A   192.168.1.102
+ client          IN  A   192.168.1.103
+ 101     IN  PTR         masterdns.unixmen.local.
+ 102     IN  PTR         secondarydns.unixmen.local.
+ 103     IN  PTR         client.unixmen.local.
+
+- configure firewall:
+firewall-cmd --permanent --add-port=53/tcp
+firewall-cmd --permanent --add-port=53/udp
+firewall-cmd --reload
+
+- configure permissions, ownership, SELinux:
+chgrp named -R /var/named
+chown -v root:named /etc/named.conf
+restorecon -rv /var/named
+restorecon /etc/named.conf
+
+- test for syntax errors:
+named-checkconf /etc/named.conf
+named-checkzone unixmen.local /var/named/forward.unixmen
+named-checkzone unixmen.local /var/named/reverse.unixmen
+
+- add DNS server to network configuration:
+vi /etc/sysconfig/network-scripts/ifcfg-enp0s3
+ ...
+ DNS=192.168.1.101
+ ...
+
+vi /etc/resolv.conf
+ nameserver 192.168.1.101
+
+systemctl restart network
+
+- test DNS server:
+dig masterdns.unixmen.local
+nslookup unixmen.local
+
+
+src:
+https://www.tecmint.com/install-configure-cache-only-dns-server-in-rhel-centos-7/
+https://www.tecmint.com/setup-recursive-caching-dns-server-and-configure-dns-zones/
+https://www.linuxhelp.com/how-to-setup-cache-only-dns-server-using-bind
+https://www.unixmen.com/setting-dns-server-centos-7/

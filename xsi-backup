@@ -1,0 +1,121 @@
+
+13G ~ 1h OneDiff
+500mb ~ 10min w/ verification
+
+13.5G ~ 1h Xsitools local dedupl
+
+XSIBackup - https://33hops.com/
+
+Enviroment:
+Both servers have esxi 6.7
+SXI ver = 11.2.19 PRO
+esxi-a: the server with the VMs
+esxi-b: the server to host the backups
+ip-b: esxi-b's IP
+
+
+1. Initial Setup:
+
+on esxi-b:
+- enable sshd
+- allow ssh on fw
+
+on esxi-a:
+- enable sshd & client
+- allow ssh on fw
+- $ cp xsi.zip /vmfs/volumes/datastore1/xsi/
+- $ unzip xsi.zip
+- $ chmod -R 0700 * the unzipped files
+- $ ./xsibackup --link-srv=[ip-b]
+
+[OR]
+
+- $ chmod -R 0700 install
+- ./install
+
+2. Backup:
+
+- OneDiff
+
+The first time the backup is run, it will make a full backup
+of your virtual machine.
+This will prepare the base disks that will be used as the base
+of the following subsequent backups, to merge the diff data with.
+The folder will be named after the original VM, thus you MUST use
+a different datastore to store your clone copy.
+All operations are performed hot, while the VM is running
+and users are connected.
+
+OneDiff creates a mirror VM with the _XSIBAK string
+appended to the original VM name.
+Subsequent differential data is sent to this mirrored VM
+and integrated with base data sent there before.
+OneDiff has been conceived to make VM backup as light and
+fast as possible, by copying just changed bytes from your
+running VM to the _XSIBAK mirror.
+Once they get to the mirror system, they are integrated
+into a single consolidated disk file per .vmdk disk.
+
+Once the first full backup is made, XSIBACKUP-PRO will add the
+cloned VM to the inventory as YOURORIGINALVM_XSIBAK and this
+new automatically generated VM will be ready to be run by just
+starting it up. (Didn't happen - had to register the vm manually)
+
+Nevertheless you should not start this VM unless you want it
+to replace the original or reset the OneDiff differential backups
+chain, as the .vmdk CIDs will change and the following time you run
+your OneDiff job this fact will be detected and XSIBACKUP-PRO will
+make an initial full backup restarting the process.
+
+(If you feel curious and you want to test your piled backups are
+consistent, simply copy the full folder somewhere else, add the copy
+to the ESXi inventory and delete it after you have satisfied your
+curiosity.)
+
+Take on account that the first time you initiate a OneDiff backup
+all snapshots will be removed, thus if you want a backup that can be
+compatible with test VMs or VMs that need to keep pre-existing snapshots,
+do not use OneDiff as your --backup-prog, leave this parameter unset
+and make a full backup of those VMs instead. OneDiff has been designed
+to backup big production VMs, not to be compatible wih test environments.
+
+- OneDiff jobfile (84):
+"/scratch/XSI/XSIBackup-Pro/xsibackup" \
+--backup-prog=OneDiff  \
+--backup-point="[ip-b]:22:/vmfs/volumes/datastore1" \
+--remote-xsipath="/scratch/XSI/XSIBackup-Pro" \
+--backup-type=Custom \
+--backup-vms="my-vm-1" \
+--backup-how=Hot \
+--certify-backup=yes \
+--use-smtp=2 \
+--mail-to=receiver@mail.com \
+--backup-id="84" \
+--description="84 info" \
+--on-success="backupid->94" \
+--on-error="execprog->/scratch/XSI/XSIBackup-Pro/ssh-off.sh" \
+--exec=yes >> "/scratch/XSI/XSIBackup-Pro/var/logs/xsibackup.log"
+
+- XSITools jobfile (94):
+"/scratch/XSI/XSIBackup-Pro/xsibackup" \
+--backup-prog=XSITools:z  \
+--host=ip-b:22
+--backup-point="/vmfs/volumes/datastore1/snapbackup/" \
+--remote-xsipath="/scratch/XSI/XSIBackup-Pro" \
+--backup-type=All \
+--override=xsibakfilter \
+--certify-backup=yes \
+--use-smtp=2 \
+--mail-to=receiver@mail.com \
+--backup-id="84" \
+--description="84 info" \
+--on-success="execprog->/scratch/XSI/XSIBackup-Pro/ssh-off.sh" \
+--on-error="execprog->/scratch/XSI/XSIBackup-Pro/ssh-off.sh" \
+--exec=yes >> "/scratch/XSI/XSIBackup-Pro/var/logs/xsibackup.log"
+
+vi /scratch/XSI/XSIBackup-Pro/conf/smtpsrvs
+ 2;smtp.gmail.com:465;sender@mail.com;sender@mail.com;passw0rd;yes;TLS;0
+
+vi /var/spool/cron/crontabs/root
+ 00 00 * * * /etc/init.d/SSH start
+ 01 00 * * * "/scratch/XSI/XSIBackup-Pro/jobs/84"

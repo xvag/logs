@@ -1,0 +1,158 @@
+
+# RPM
+
+- RPM database files:
+/var/lib/rpm
+rpm [...] --dbpath=/alternative/db/path [...]
+rpm [...] --rebuilddb
+
+- Helper programs and scripts used by RPM:
+/usr/lib/rpm
+
+- rpmrc files to specify default settings:
+/usr/lib/rpm/rpmrc
+/etc/rpmrc
+~/.rpmrc
+rpm [...] --rcfile=/alternative/rcfile [...]
+
+-- Queries
+- list all installed packages
+rpm -qa
+rpm -q bash
+
+- which package installed this file
+rpm -qf filename
+
+- what files were install by this package
+rpm -ql bash
+
+- info about this package
+rpm -qi bash
+
+- info about this package, from package file (not package db)
+rpm -qip foo-1.0.0-1.noarch.rpm
+
+- list prerequisites of the package
+rpm -qp --requires foo-1.0.0-1.noarch.rpm
+
+- what package provides a requisite
+rpm -q --whatprovides libc.so.6
+
+- Verify packages
+rpm -Va
+rpm -V bash
+
+.: test passed
+?: test could not be performed
+S: file size differs
+M: file permissions and/or type differs
+5: MD5 checksum differs
+D: device major/minor number mismatch
+L: symbolic link path mismatch
+U: user ownership differs
+G: group ownership differs
+T: modification time differs
+P: capabilities differ
+
+- install from compiled file
+rpm -ivh package.rpm
+
+- uninstall
+rpm -e package
+rpm -e --test -vv package
+
+- upgrade
+rpm -Uvh package.rpm
+
+- downgrade
+rpm -Uvh --oldpackage package.rpm
+
+- freshening packages
+rpm -Fvh *.rpm
+
+- upgrade the kernel
+rpm -ivh kernel-{version}.{arch}.rpm
+
+- extract files from rpm package to cpio archive
+rpm2cpio foobar.rpm > foobar.cpio
+
+- list the file in an rpm
+rpm2cpio foobar.rpm | cpio -t
+or
+rpm -qilp foobar.rpm
+
+- extract onto the system
+rpm2cpio bash-XXXX.rpm | cpio -ivd bin/bash
+rpm2cpio foobar.rpm | cpio --extract --make-directories
+
+
+
+# YUM
+
+- remove some or all cached information
+yum clean [ packages | metadata | expire-cache | rpmdb | plugins | all ]
+
+- modular extensions (plugins) and companion programs
+/usr/bin/yum*
+/usr/sbin/yum*
+
+- repository configuration files
+/etc/yum.repos.d/
+
+yum [...] --enablerepo=somerepo [...]
+yum [...] --disablerepo=somerepo [...]
+
+- search packages
+yum search [all] keyword
+yum list "*keyword*"
+yum list [installed | updates | available ]
+
+- show info about a package
+yum info package
+
+- list dependencies of a package
+yum deplist package
+
+yum grouplist [group1] [group2]
+yum groupinfo group1 [group2]
+
+yum provides "/logrotate.conf"
+yum whatprovides "*/packagename"
+
+- verify packages
+yum install yum-plugin-verify
+yum verify [package]
+yum verify-rpm [package]
+yum verify-all [package]
+
+- install packages
+yum install package1 [package2]
+
+- same as rpm install, but also resolves dependencies by accessing remote repos
+yum localinstall package-file.rpm
+
+yum groupinstall group-name
+yum install @group-name
+
+- uninstall package (removes all packages that depend on it)
+yum remove package1 [package2]
+yum groupremove 'group name'
+yum erase package
+
+- update packages
+yum update [package]
+yum groupupdate 'group name'
+
+- additional commands
+yum list "yum-plugin*"
+
+- list all enabled repos
+yum repolist
+
+- initiate interactive shell to run multiple yum commands/or read from textfile
+yum shell [textfile]
+
+- download but not install
+yum install --downloadonly [--downloaddir=/dir/to/download/] package
+
+yum history

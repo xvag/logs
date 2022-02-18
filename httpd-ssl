@@ -1,0 +1,60 @@
+Host: CentOS 7
+
+# Set up the server
+
+yum install httpd
+
+- httpd configuration file:
+vi /etc/httpd/conf/httpd.conf
+ ...
+ # port/ip the server listens to:
+ # Listen *:80
+ # Listen 192.168.1.100:80
+ Listen 80
+ ...
+ # log files located at /var/log/httpd/
+ ErrorLog "logs/error_log"
+ ...
+ CustomLog "logs/access_log" combined
+ ...
+ # root dir for the website:
+ DocumentRoot "/var/www/html"
+ ...
+ # hostname as servername
+ ServerName localhost
+ ...
+
+# Set up SSL
+
+yum install ssl_mod openssl
+
+- Generate self-signed certificate:
+-- location to store:
+tmpath=/etc/pki/tls
+-- Generate private key:
+openssl genrsa -out $tmpath/private/test.key 2048
+-- Generate CSR:
+openssl req -new -key $tmpath/private/test.key -out $tmpath/private/test.csr
+-- Generate Self Signed Cert:
+openssl x509 -req -days 365 -in $tmpath/private/test.csr -signkey $tmpath/private/test.key -out $tmpath/certs/test.crt
+
+- update Apache SSL config file
+vi /etc/httpd/conf.d/ssl.conf
+ ...
+ SSLCertificateFile /etc/pki/tls/certs/test.crt
+ ...
+ SSLCertificateKeyFile /etc/pki/tls/private/test.key
+ ...
+
+- configure firewall:
+firewall-cmd --permanent --zone=public --add-service=http
+firewall-cmd --permanent --zone=public --add-service=https
+firewall-cmd --reload
+
+systemctl start/restart/enable httpd
+
+
+sources:
+https://httpd.apache.org/docs/2.4/
+https://wiki.centos.org/HowTos/Https
+https://www.tecmint.com/setup-apache-with-name-based-virtual-hosting-with-ssl-certificate/

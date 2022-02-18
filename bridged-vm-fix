@@ -1,0 +1,8 @@
+
+- bridged vm issue:
+
+if:
+failed to parse default acl file '/usr/local/etc/qemu/bridge.conf' */
+
+then:
+echo "allow br0" > /etc/qemu/bridge.conf

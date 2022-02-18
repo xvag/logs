@@ -1,0 +1,23 @@
+int x, i
+float y, _AB
+str string1="good string"
+str string2="bad string
+
+x=len(string1)
+type(y)
+
+x=input('Dose timi gia x:')
+
+x+=i # this is comment
+i=5%-.4e+3
+
+print("this is a string: \"%s\"",string1)
+
+y=-0.55e+66
+
+96VAR_NAME = i/(+5.e-9*_AB)
+
+_AB=y**-1.4  """ this is a loooo
+oooooooo
+ooooooooooooooooo
+oooong comment """

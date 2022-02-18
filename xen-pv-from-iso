@@ -1,0 +1,78 @@
+Install Xen PV VM from iso
+
+lvcreate -L60G -n vmdisk vg0
+or
+qemu-img create -f raw vmdisk.raw 20G
+
+- vim vm1.cfg:
+# Use HVM instead of PV
+builder = "hvm"
+# Set memory and vcpus as needed
+memory = 4096
+vcpus = 2
+# Host/Domain name
+name = "vm1"
+# Setup bridged interface with Intel e1000
+vif = [ 'type=ioemu, model=e1000, mac=00:16:3E:29:QQ:QQ, bridge=xenbr1' ]
+# Disks - our LVM we just created & the installer ISO image
+disk = [
+        'phy:/dev/vg0/vmdisk,xvda,rw',
+        'file:/opt/iso/CentOS-7-x86_64-Minimal-1503-01.iso,xvdb:cdrom,r'
+       ]
+# Set boot order (d = CDROM, c = HDD)
+boot = "dc"
+
+# Use VESA-compliant display with more VRAM
+vga = "stdvga"
+videoram = 64
+# Use VNC for display
+vnc = 1
+vnclisten  = "192.168.10.10"
+vncdisplay = 0
+vncpasswd  = "supersecret"
+
+
+- start the DomU:
+xl create vm1.cfg
+
+- connect via vnc:
+gvnviewer 192.168.10.10:0
+
+- reboot on os:
+xl destroy vm1
+
+vim vm1.cfg:
+ ...
+ disk = [ 'phy:/dev/vg0/vm1,xvda,rw' ]
+ boot = "c"
+ ...
+
+ xl create vm1.cfg
+
+- inside vm os run:
+dmesg | grep paravirtual
+```
+
+- boot in PV mode:
+cp vm1.cfg vm1-hvm.cfg
+
+vim vm1.cfg
+ # We will be using PyGrub as the bootloader
+ bootloader = "/usr/lib/xen-4.4/bin/pygrub"
+ # Set hostname, memory, vpcus, etc.
+ name = "xr1"
+ memory = 4096
+ vcpus = 2
+ # Use the same disk as used previously, with the same device name
+ disk = [ 'phy:/dev/vg0/xr1-disk,xvda,rw' ]
+ # Set up a proper routed network connection
+ vif = [ 'ip=176.9.XXX.XXX, mac=00:16:3E:29:QQ:QQ, gatewaydev=xenbr0:1' ]
+
+xl create vm1.cfg
+
+- multiple NICs:
+vif=[ 'mac=00:16:3e:70:01:01,bridge=br0', 'mac=00:16:3e:70:02:01,bridge=br1' ]
+
+src:
+https://ycnrg.org/xen-install-os-from-iso-pv/
+https://wiki.xenproject.org/wiki/Xen_Networking

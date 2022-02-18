@@ -1,0 +1,8 @@
+S0:	'	-> S1
+	"	-> S2
+S1:	a-z A-Z 0-9 \s	-> S1
+	'	-> S3
+S2:	a-z A-Z 0-9 \s	-> S2
+	"	-> S3
+S3:	\n	-> GOOD
+GOOD(OK):
