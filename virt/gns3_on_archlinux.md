@@ -152,6 +152,7 @@ $ cat /etc/hosts
 # End of file
 ```
 #### [14] Set the hostid to '00000000'.
+- https://github.com/xvag/logs/blob/master/code/bash/set-hostid.sh
 ```
 $ cd $HOME
 $ hostid
@@ -161,6 +162,7 @@ $ sudo ./set-hostid.sh 00000000
 $ hostid
 ```
 #### [15] Create a sample IOL license file.
+- https://github.com/xvag/logs/blob/master/code/python/iou4u.py
 ```
 $ curl -Lo iou4u.py https://goo.gl/fpzYbY
 $ chmod u+x iou4u.py
