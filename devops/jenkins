@@ -1,10 +1,10 @@
 
 # Install Jenkins with DIND on Docker
-[link]
+https://github.com/xvag/logs/tree/master/code/jenkins/jenkins-on-docker
 
 # Install Jenkins on K8s
-[link to gke cluster]
-[link to ymls]
+https://github.com/xvag/logs/blob/master/code/gcp/create-k8scluster-gke.sh
+https://github.com/xvag/logs/tree/master/code/jenkins/jenkins-on-k8s
 - access on:
 htt‌p://{IP}/jenkins
 - retrieve admin pass:
@@ -19,7 +19,7 @@ helm inspect values jenkins/jenkins
 use –set flag and pass key=value
 or
 create a values YML file and pass it on as argument to Helm like --values=jenkins-values.yml
-[link to jenkins-values.yml]
+https://github.com/xvag/logs/blob/master/code/jenkins/jenkins-on-k8s/jenkins-values.yml
 - create jenkins namespace, before installation:
 kubectl create ns jenkins
 - install:
