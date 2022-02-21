@@ -1,0 +1,95 @@
+
+# Install Jenkins with DIND on Docker
+[link]
+
+# Install Jenkins on K8s
+[link to gke cluster]
+[link to ymls]
+- access on:
+htt‌p://{IP}/jenkins
+- retrieve admin pass:
+kubectl -n jenkins exec -it jenkins-0 -- cat /var/jenkins_home/secrets/initialAdminPassword
+
+# Intall Jenkins on K8s with Helm
+helm repo add jenkins htt‌ps://charts.jenkins.io
+helm search repo jenkins
+- check default values:
+helm inspect values jenkins/jenkins
+- change values:
+use –set flag and pass key=value
+or
+create a values YML file and pass it on as argument to Helm like --values=jenkins-values.yml
+[link to jenkins-values.yml]
+- create jenkins namespace, before installation:
+kubectl create ns jenkins
+- install:
+helm install jenkins jenkins/jenkins --namespace jenkins --values=jenkins-values.yml
+- retrieve admin pass:
+kubectl exec --namespace jenkins -it svc/jenkins -c jenkins -- /bin/cat /run/secrets/chart-admin-password && echo
+
+
+# Scale Jenkins with Build Agents
+- Need a docker image of the build agent, that will be used to automatically provision container based build agents.
+https://hub.docker.com/r/jenkins/ssh-agent/
+https://hub.docker.com/r/jenkins/inbound-agent/
+## With Docker
+- Install Jenkins Docker Plugin and Restart
+- Add Docker as cloud in Jenkins and configure URI:
+tcp://docker-service:2375
+The Docker daemon typically listens on ports 2375/2376 for tcp traffic.
+Port 2375 is used for non-SSL data whereas port 2376 is used for SSL data.
+- Configure the "Docker Agent template":
+Labels: docker-agents
+Docker Image: jenkins/ssh-slave
+Connect Method: Attach Docker container
+- Run a sample test build to test your setup, with "Restrict where this project can be run"
+## With K8s
+- Install Jenkins Kubernetes Plugin
+- Add Kubernetes as cloud in Jenkins and configure URL:
+https://{IP}:8443
+Kubernetes namespace: build
+- to find the info: kubectl cluster-info
+- We need to specify a namespace in which Jenkins can create/delete/modify pods.
+Jenkins will need extra privileges for this. It is recommended that rather than
+granting extra privileges in the default namespace, we create a separate namespace
+and provide the required privileges to the Jenkins Kubernetes plugin.
+- Configure Pod Template:
+It will be used to create pods to run build agents in the cluster.
+Name: jnlp
+Labels: jnlp
+- Configure Container Template:
+It will be used to create the build containers for our builds.
+Name: jnlp
+Docker Image: jenkins/inbound-agent:4.3-4-jdk11
+Working Dir: /home/jenkins/agents
+- Test build:
+create a simple Freestyle project
+apply the “jnlp” label to this project
+run the build
+
+# Jenkins CLI over ssh
+- Configure SSH port on "Configure Global Security" page.
+- Add the SSH Public Key on "<JENKINS_URL>/user/<USERNAME>/configure" page.
+- Configure Permissions to Execute Commands from the CLI,
+under the Authorization section on the "Configure Global Security" page.
+- verify:
+curl -Lv <JENKINS_URL>:<PORT>/login 2>&1 | grep -i 'x-ssh-endpoint'
+- list available commands:
+ssh -l 'USERNAME' -p <ssh port> <JENKINS HOSTNAME> help
+- commands for jobs:
+list-jobs
+create-job <JOB_NAME> < config.xml
+help build
+build <JOB_NAME> -v -s
+update-job <JOB_NAME> < config.xml
+delete-job <JOB_NAME>
+
+# links for automation:
+https://www.jenkins.io/doc/book/managing/cli/
+https://www.jenkins.io/doc/book/using/remote-access-api/
+https://pypi.org/project/python-jenkins/
+https://python-jenkins.readthedocs.io/en/latest/examples.html
+https://github.com/pycontribs/jenkinsapi/blob/master/doc/source/index.rst
+https://github.com/jenkinsci/configuration-as-code-plugin
+https://plugins.jenkins.io/job-dsl/
+https://github.com/jenkinsci/configuration-as-code-plugin/blob/master/docs/seed-jobs.md
