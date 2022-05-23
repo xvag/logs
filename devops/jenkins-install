@@ -1,0 +1,35 @@
+
+# Install Jenkins with DIND on Docker
+https://github.com/xvag/logs/tree/master/code/jenkins/jenkins-on-docker
+- for initialAdminPassord:
+docker-compose logs jenkins
+
+
+# Install Jenkins on K8s
+https://github.com/xvag/logs/blob/master/code/gcp/create-k8scluster-gke.sh
+https://github.com/xvag/logs/tree/master/code/jenkins/jenkins-on-k8s
+- access on:
+htt‌p://{IP}/jenkins
+- retrieve admin pass:
+kubectl -n jenkins exec -it jenkins-0 -- cat /var/jenkins_home/secrets/initialAdminPassword
+
+
+# Intall Jenkins on K8s with Helm
+- install helm on client machine
+https://github.com/helm/helm/releases
+- add & search jenkins repo
+helm repo add jenkins htt‌ps://charts.jenkins.io
+helm search repo jenkins
+- check default values:
+helm inspect values jenkins/jenkins
+- change values:
+use –set flag and pass key=value
+or
+create a values YML file and pass it on as argument to Helm like --values=jenkins-values.yml
+https://github.com/xvag/logs/blob/master/code/jenkins/jenkins-on-k8s/helm/jenkins-values.yml
+- create jenkins namespace, before installation:
+kubectl create ns jenkins
+- install:
+helm install jenkins jenkins/jenkins --namespace jenkins --values=jenkins-values.yml
+- retrieve admin pass:
+kubectl exec --namespace jenkins -it svc/jenkins -c jenkins -- /bin/cat /run/secrets/chart-admin-password && echo

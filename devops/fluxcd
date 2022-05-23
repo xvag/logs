@@ -1,0 +1,82 @@
+# Install/Bootstrap
+
+- create personal access token in github, with scopes:
+repo (all)
+admin:repo_hook (read)
+
+export GITHUB_TOKEN=<your-personal-access-token>
+export GITHUB_USER=<your-github-username>
+
+- install flux cli:
+https://fluxcd.io/docs/installation/
+
+and enable bash completion:
+echo "source /etc/bash_completion" >> ~/.bashrc
+echo ". <(flux completion bash)" >> ~/.bashrc
+source ~/.bashrc
+
+- bootstrap a flux enviroment:
+flux check --pre
+
+flux bootstrap github  --owner=$GITHUB_USER  \
+--repository=flux-infra \
+--branch=main  \
+--path=./clusters/dev  \
+--personal \
+--log-level=debug \
+--network-policy=false \
+--components=source-controller,kustomize-controller
+
+validate:
+flux check
+kubectl get all -n flux-system
+
+
+# Sources
+
+- check sources:
+flux get sources
+
+- create a git source:
+flux create source git <src-name> \
+--url=https://path/to/repo.git \
+--branch=main \
+--interval=30s
+
+
+# Kustomizations:
+
+- check kustomizations:
+flux get kustomizations
+
+- create kustomization:
+-- must have the namespace ready:
+kubectl create ns <ns-name>
+-- then create:
+flux create kustomization <kust-name> \
+--source=<src-name> \
+--path="./path/to/folder/with/kust/file" \
+--prune=true \
+--interval=1m \
+--target-namespace=<ns-name> \
+--health-check="Deployment/<app-name>.<ns-name>" \
+--depends-on=<app-name>
+
+- install kustomize tool:
+https://kubectl.docs.kubernetes.io/installation/kustomize/
+
+kustomize create --autodetect
+
+
+# Reconcile:
+flux reconcile kustomization <kust-name>
+flux reconcile source git <src-name>
+
+# Export:
+flux export kustomization <kust-name>
+flux export source git <src-name>
+or with option:
+--export
+
+# Logs
+flux logs -f --tail 10

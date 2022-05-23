@@ -1,0 +1,71 @@
+
+# Jenkins X Architecture:
+https://jenkins-x.io/about/concepts/
+
+# Jenkins X tools:
+-- Kubernetes
+https://kubernetes.io/
+orchestration framework for running a set of containers.
+-- Helm
+https://helm.sh/docs/
+package manager for Kubernetes.
+-- Helmfile
+https://github.com/roboll/helmfile
+ a declarative specification for creating Helm charts.
+ Jenkins X uses helmfiles to install, upgrade and configure Helm charts.
+-- Kuberhealthy
+https://github.com/kuberhealthy/kuberhealthy
+a monitoring operator for Kubernetes.
+It lets you create your own tests and integrates seamlessly
+with tools like Prometheus and InfluxDB.
+Jenkins X uses Kuberhealthy to monitor itself.
+-- Tekton
+https://cloud.google.com/tekton
+the pipeline execution engine of Jenkins X.
+At the run time, Jenkins X pipelines are converted into Tekton resources
+and are executed inside a Kubernetes cluster.
+-- Lighthouse
+https://github.com/jenkins-x/lighthouse
+a lightweight ChatOps-based webhook handler to execute Jenkins X pipelines
+on webhooks for multiple Git providers such as GitHub, BitBucket, GitLab, etc.
+-- Skaffold
+https://skaffold.dev/
+will build a Docker image, push it to a registry, and deploy it to a Kubernetes cluster.
+It watches the local source code directory and rebuilds and redeploys automatically
+whenever the source code changes.
+-- Kaniko
+https://github.com/GoogleContainerTools/kaniko
+build container images from a Dockerfile.
+Kaniko does not use Docker daemon and can be used to build images securely.
+-- Kpt
+https://googlecontainertools.github.io/kpt/
+used to create declarative workflows based on configuration files.
+It's also used to update, validate and apply Kubernetes configurations.
+-- Octant
+https://octant.dev/
+used to visualize Kubernetes workloads.
+Jenkins X uses it as a plugin for creating a visualization console.
+-- Terraform
+https://www.terraform.io/
+an Infrastructure as Code tool for creating vendor-agnostic infrastructure
+in various public clouds.
+-- Jenkins
+https://www.jenkins.io/
+Jenkins X provides interoperability with Jenkins.
+-- Nexus
+https://www.sonatype.com/products/repository-oss
+an open source binary artifact management tool which stores and manages
+versioned build artifacts. An in-built Nexus repository manager is used
+to ship Jenkins X. Apart from Nexus, Jenkins X community is also working
+on a low memory footprint replacement for Nexus called -- Bucketrepo
+https://github.com/jenkins-x/bucketrepo
+
+
+# Setup Jenkins X
+-- create github organization for lab
+-- install kubectl
+https://kubernetes.io/docs/tasks/tools/#kubectl
+-- install jx
+https://jenkins-x.io/v3/admin/setup/jx3/
+-- install Terraform
+https://learn.hashicorp.com/tutorials/terraform/install-cli#install-terraform

@@ -1,4 +1,5 @@
 #!/bin/sh
+set -x
 
 # Go root and cd to ~
 sudo su
