@@ -7,11 +7,11 @@
 
 gcloud auth login
 
-CLUSTER_NAME=jenkins
+CLUSTER_NAME=jenkins2
 
 ZONE=europe-west4-a
 
-MACHINE_TYPE=e2-medium
+MACHINE_TYPE=n1-highcpu-2
 
 gcloud container clusters \
     create $CLUSTER_NAME \

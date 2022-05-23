@@ -1,37 +1,9 @@
 
-# Install Jenkins with DIND on Docker
-https://github.com/xvag/logs/tree/master/code/jenkins/jenkins-on-docker
-
-# Install Jenkins on K8s
-https://github.com/xvag/logs/blob/master/code/gcp/create-k8scluster-gke.sh
-https://github.com/xvag/logs/tree/master/code/jenkins/jenkins-on-k8s
-- access on:
-htt‌p://{IP}/jenkins
-- retrieve admin pass:
-kubectl -n jenkins exec -it jenkins-0 -- cat /var/jenkins_home/secrets/initialAdminPassword
-
-# Intall Jenkins on K8s with Helm
-helm repo add jenkins htt‌ps://charts.jenkins.io
-helm search repo jenkins
-- check default values:
-helm inspect values jenkins/jenkins
-- change values:
-use –set flag and pass key=value
-or
-create a values YML file and pass it on as argument to Helm like --values=jenkins-values.yml
-https://github.com/xvag/logs/blob/master/code/jenkins/jenkins-on-k8s/jenkins-values.yml
-- create jenkins namespace, before installation:
-kubectl create ns jenkins
-- install:
-helm install jenkins jenkins/jenkins --namespace jenkins --values=jenkins-values.yml
-- retrieve admin pass:
-kubectl exec --namespace jenkins -it svc/jenkins -c jenkins -- /bin/cat /run/secrets/chart-admin-password && echo
-
-
 # Scale Jenkins with Build Agents
 - Need a docker image of the build agent, that will be used to automatically provision container based build agents.
 https://hub.docker.com/r/jenkins/ssh-agent/
 https://hub.docker.com/r/jenkins/inbound-agent/
+
 ## With Docker
 - Install Jenkins Docker Plugin and Restart
 - Add Docker as cloud in Jenkins and configure URI:
@@ -43,6 +15,7 @@ Labels: docker-agents
 Docker Image: jenkins/ssh-slave
 Connect Method: Attach Docker container
 - Run a sample test build to test your setup, with "Restrict where this project can be run"
+
 ## With K8s
 - Install Jenkins Kubernetes Plugin
 - Add Kubernetes as cloud in Jenkins and configure URL:

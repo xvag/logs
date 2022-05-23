@@ -1,7 +1,7 @@
 version: '3.8'
 
 networks:
-  lfs261:
+  jenkinsnet:
     driver: bridge
 
 volumes:
@@ -22,7 +22,7 @@ services:
       - DOCKER_CERT_PATH=/certs/client
       - DOCKER_TLS_VERIFY=1
     networks:
-      - lfs261
+      - jenkinsnet
     hostname: jenkins
     restart: always
     volumes:
@@ -38,7 +38,7 @@ services:
     environment:
       - DOCKER_TLS_CERTDIR=/certs
     networks:
-      - lfs261
+      - jenkinsnet
     privileged: true
     hostname: docker
     restart: always
