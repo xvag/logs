@@ -19,9 +19,9 @@ source ~/.bashrc
 flux check --pre
 
 flux bootstrap github  --owner=$GITHUB_USER  \
---repository=flux-infra \
+--repository=flux-fleet \
 --branch=main  \
---path=./clusters/dev  \
+--path=./clusters/staging  \
 --personal \
 --log-level=debug \
 --network-policy=false \

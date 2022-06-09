@@ -23,7 +23,7 @@ helm search repo jenkins
 - check default values:
 helm inspect values jenkins/jenkins
 - change values:
-use –set flag and pass key=value
+use --set flag and pass key=value
 or
 create a values YML file and pass it on as argument to Helm like --values=jenkins-values.yml
 https://github.com/xvag/logs/blob/master/code/jenkins/jenkins-on-k8s/helm/jenkins-values.yml

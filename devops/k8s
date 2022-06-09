@@ -1,0 +1,9 @@
+-----
+cni
+-----
+
+This command will give you the pod CIDR addresses for each of the nodes in your cluster.
+kubectl get nodes -o jsonpath='{.items[*].spec.podCIDR}'
+
+This will show pod network CIDR which used by kube-proxy
+kubectl cluster-info dump | grep -m 1 cluster-cidr
