@@ -1,0 +1,21 @@
+### install ArgoCD
+
+kubectl create namespace argocd
+
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+kubectl patch svc argocd-server -n argocd --patch \
+'{"spec": { "type": "NodePort", "ports": [ { "nodePort": 32100, "port": 443, "protocol": "TCP", "targetPort": 8080 } ] } }'
+
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+
+
+### to change the password
+
+kubectl -n argocd patch secret argocd-secret \
+-p '{"stringData": {
+  "admin.password": "$HASHEDPASSWD",
+  "admin.passwordMtime": "'$(date +%FT%T%Z)'"
+}}'
+
+where: $HASHEDPASSWD is the your password hashed with (eg) https://bcrypt-generator.com/
