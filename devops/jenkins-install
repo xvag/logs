@@ -12,7 +12,8 @@ https://github.com/xvag/logs/tree/master/code/jenkins/jenkins-on-k8s
 htt‌p://{IP}/jenkins
 - retrieve admin pass:
 kubectl -n jenkins exec -it jenkins-0 -- cat /var/jenkins_home/secrets/initialAdminPassword
-
+or
+printf $(kubectl get secret --namespace jenkins jenkins -o jsonpath="{.data.jenkins-admin-password}" | base64 --decode);echo
 
 # Intall Jenkins on K8s with Helm
 - install helm on client machine

@@ -18,4 +18,4 @@ kubectl -n argocd patch secret argocd-secret \
   "admin.passwordMtime": "'$(date +%FT%T%Z)'"
 }}'
 
-where: $HASHEDPASSWD is the your password hashed with (eg) https://bcrypt-generator.com/
+(where: $HASHEDPASSWD is the your password hashed with (eg) https://bcrypt-generator.com/)
