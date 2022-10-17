@@ -15,17 +15,23 @@ Plug 'jistr/vim-nerdtree-tabs'
 call plug#end()
 
 " -- nerdtree --
-nmap <silent> <special> <F2> :NERDTreeToggle<RETURN>
+nmap <silent> <F3> :NERDTreeToggle<CR>
 
 " -- vim-airlinesettings --
 let g:airline#extensions#tabline#enabled = 1
+let g:airline#extensions#tabline#show_splits = 1
+let g:airline#extensions#tabline#show_buffers = 1
 let g:airline#extensions#tabline#fnamemod = ':t'
+let g:airline#extensions#tabline#tab_nr_type = 1
 
 " -- netrw ---
 let g:netrw_banner = 0
 
 " -- fzf ---
+"let g:fzf_layout = { 'down': '~40%' }
 let g:fzf_preview_window = ['right,50%', 'ctrl-/']
+nnoremap <silent> <F2> :Files<CR>
+nnoremap <silent> <F4> :BLines<CR>
 
 " -- Movement --
 noremap <C-l> <C-b>
@@ -35,7 +41,9 @@ noremap <C-k> <C-u>
 map gn :bn<cr>
 map gb :bp<cr>
 map gd :bd<cr> 
+
 " -- Editing --
+set hidden
 set backspace=indent,eol,start
 
 " -- Spaces & Tabs --
@@ -44,6 +52,7 @@ set softtabstop=4
 set expandtab
 
 " -- UI Config --
+set mouse=a
 syntax on
 set number
 set showcmd
@@ -53,6 +62,8 @@ set lazyredraw
 filetype indent on
 
 " -- Searching --
+nnoremap <silent> <Leader>f :Rg<CR>
+command! -bang -nargs=* Rg call fzf#vim#grep("rg --column --line-number --no-heading --color=always --smart-case ".shellescape(<q-args>), 1, {'options': '--delimiter : --nth 4..'}, <bang>0)
 set incsearch
 set hlsearch
 nnoremap <leader><space> :nohlsearch<CR>
