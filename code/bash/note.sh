@@ -21,6 +21,8 @@ mkdir -p folder/{sub1,sub2}/{sub1,sub2,sub3}
 
 last | grep username | tr -s ' ' | cut -d' ' -f1,3 | sort -k2 | uniq
 
+test
+
 scsiadd -p
 scisadd -r 0 0 0 0
 
