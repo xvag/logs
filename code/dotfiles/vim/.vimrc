@@ -14,8 +14,11 @@ Plug 'Xuyuanp/nerdtree-git-plugin'
 Plug 'jistr/vim-nerdtree-tabs'
 call plug#end()
 
-" -- nerdtree --
-nmap <silent> <F3> :NERDTreeToggle<CR>
+" -- Fkeys --
+nnoremap <silent> <F1> :NERDTreeToggle<CR>
+nnoremap <silent> <F2> :Files<CR>
+nnoremap <silent> <F3> :Lines<CR>
+nnoremap <silent> <F4> :BLines<CR>
 
 " -- vim-airlinesettings --
 let g:airline#extensions#tabline#enabled = 1
@@ -30,8 +33,6 @@ let g:netrw_banner = 0
 " -- fzf ---
 "let g:fzf_layout = { 'down': '~40%' }
 let g:fzf_preview_window = ['right,50%', 'ctrl-/']
-nnoremap <silent> <F2> :Files<CR>
-nnoremap <silent> <F4> :BLines<CR>
 
 " -- Movement --
 noremap <C-l> <C-b>
