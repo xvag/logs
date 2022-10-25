@@ -1,0 +1,32 @@
+
+_BLACK="\[$(tput setaf 0)\]"
+_RED="\[$(tput setaf 1)\]"
+_GREEN="\[$(tput setaf 2)\]"
+_YELLOW="\[$(tput setaf 3)\]"
+_BLUE="\[$(tput setaf 4)\]"
+_MAGENTA="\[$(tput setaf 5)\]"
+_CYAN="\[$(tput setaf 6)\]"
+_WHITE="\[$(tput setaf 7)\]"
+_BOLD="\[$(tput bold)\]"
+_RESET="\[$(tput sgr0)\]"
+
+#PS1="\e[0;36m[\W]\e[m"
+#PS1+="\e[0;32m[\$(git branch --show-current 2>/dev/null | cut -c 1-20)]\e[m"
+#PS1="\$(kube_ps1)"
+#PS1+="\e[0;34m\$(echo $AWS_VAULT)\e[m"
+#PS1+="\n\e[0;35m\\$\e[m "
+
+PS1="${_CYAN}[\W]"
+PS1+="${_GREEN}[\$(git branch --show-current 2>/dev/null | cut -c 1-20)]"
+PS1+="${_RESET}\$(kube_ps1)"
+PS1+="\n"
+PS1+="${_BLUE}\$(echo $AWS_VAULT)"
+PS1+="${_MAGENTA}\$ "
+PS1+="${_RESET}"
+export PS1
+
+export LSCOLORS=gxBxhxDxfxhxhxhxhxcxcx
+alias ls='ls -G'
+alias ll='ls -l'
+alias la='ls -a'
+alias lla='ls -la'
