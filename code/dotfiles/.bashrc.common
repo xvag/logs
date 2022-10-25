@@ -10,12 +10,6 @@ _WHITE="\[$(tput setaf 7)\]"
 _BOLD="\[$(tput bold)\]"
 _RESET="\[$(tput sgr0)\]"
 
-#PS1="\e[0;36m[\W]\e[m"
-#PS1+="\e[0;32m[\$(git branch --show-current 2>/dev/null | cut -c 1-20)]\e[m"
-#PS1="\$(kube_ps1)"
-#PS1+="\e[0;34m\$(echo $AWS_VAULT)\e[m"
-#PS1+="\n\e[0;35m\\$\e[m "
-
 PS1="${_CYAN}[\W]"
 PS1+="${_GREEN}[\$(git branch --show-current 2>/dev/null | cut -c 1-20)]"
 PS1+="${_RESET}\$(kube_ps1)"
