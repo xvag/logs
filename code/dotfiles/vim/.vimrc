@@ -81,4 +81,5 @@ nnoremap <space> za
 nnoremap <leader>ev :vsp $MYVIMRC<CR>
 "load vimrc bindings
 nnoremap <leader>sv :source $MYVIMRC<CR>
-
+"set it to interactive in order to load .bashrc
+set shellcmdflag=-ic
