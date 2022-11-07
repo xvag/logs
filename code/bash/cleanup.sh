@@ -11,7 +11,8 @@ echo
 echo "Pacman Cache Before:"
 ls /var/cache/pacman/pkg/ | wc -l
 du -sh /var/cache/pacman/pkg/
-paccache -ruk 1
+paccache -rk1
+paccache -ruk0
 echo
 echo "Pacman Cache After:"
 ls /var/cache/pacman/pkg/ | wc -l

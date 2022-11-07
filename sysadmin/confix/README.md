@@ -1,0 +1,1 @@
+misc configurations and fixes
