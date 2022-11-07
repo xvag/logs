@@ -12,6 +12,7 @@ Plug 'junegunn/fzf.vim'
 Plug 'preservim/nerdtree'
 Plug 'Xuyuanp/nerdtree-git-plugin'
 Plug 'jistr/vim-nerdtree-tabs'
+Plug 'hashivim/vim-terraform'
 call plug#end()
 
 " -- Fkeys --
@@ -51,6 +52,7 @@ set backspace=indent,eol,start
 set tabstop=4
 set softtabstop=4
 set expandtab
+set shiftwidth=4
 
 " -- UI Config --
 set mouse=a
