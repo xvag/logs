@@ -51,8 +51,8 @@ set backspace=indent,eol,start
 " -- Spaces & Tabs --
 set tabstop=4
 set softtabstop=4
-set expandtab
 set shiftwidth=4
+set expandtab
 
 " -- UI Config --
 set mouse=a
@@ -86,3 +86,6 @@ nnoremap <leader>ev :vsp $MYVIMRC<CR>
 nnoremap <leader>sv :source $MYVIMRC<CR>
 "set it to interactive in order to load .bashrc
 set shellcmdflag=-ic
+" Zoom in/out of a window
+noremap Zz <c-w>_ \| <c-w>\|
+noremap Zo <c-w>=
