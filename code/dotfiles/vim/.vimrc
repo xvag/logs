@@ -66,7 +66,8 @@ filetype indent on
 
 " -- Searching --
 nnoremap <silent> <Leader>f :Rg<CR>
-command! -bang -nargs=* Rg call fzf#vim#grep("rg --column --line-number --no-heading --color=always --smart-case ".shellescape(<q-args>), 1, {'options': '--delimiter : --nth 4..'}, <bang>0)
+command! -bang -nargs=* Rg call fzf#vim#grep("rg --column --line-number --no-heading --color=always --smart-case --hidden ".shellescape(<q-args>), 1, fzf#vim#with_preview({'options': '--delimiter : --nth 4..'}), <bang>0)
+
 set incsearch
 set hlsearch
 nnoremap <leader><space> :nohlsearch<CR>
